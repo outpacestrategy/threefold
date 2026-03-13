@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -116,6 +117,8 @@ export default function OnboardingScreen({ onComplete }: Props) {
               value={name}
               onChangeText={setName}
               autoFocus
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
             />
 
             <Text style={[styles.label, { marginTop: 24 }]}>I identify as a...</Text>
@@ -151,6 +154,9 @@ export default function OnboardingScreen({ onComplete }: Props) {
               onChangeText={setIdentityStatement}
               multiline
               autoFocus
+              blurOnSubmit
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
             />
           </View>
         );
@@ -222,6 +228,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
                   placeholderTextColor="#A0A0A0"
                   value={hardGoal}
                   onChangeText={setHardGoal}
+                  returnKeyType="next"
                 />
               </View>
             </View>
@@ -237,6 +244,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
                   placeholderTextColor="#A0A0A0"
                   value={routineGoal}
                   onChangeText={setRoutineGoal}
+                  returnKeyType="next"
                 />
               </View>
             </View>
@@ -252,6 +260,8 @@ export default function OnboardingScreen({ onComplete }: Props) {
                   placeholderTextColor="#A0A0A0"
                   value={newGoal}
                   onChangeText={setNewGoal}
+                  returnKeyType="done"
+                  onSubmitEditing={Keyboard.dismiss}
                 />
               </View>
             </View>
@@ -269,6 +279,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         >
           {/* Progress dots */}
           <View style={styles.progress}>
@@ -308,9 +319,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF9F7',
   },
   content: {
+    flexGrow: 1,
     padding: 24,
     paddingTop: 16,
-    paddingBottom: 120,
+    paddingBottom: 24,
   },
   progress: {
     flexDirection: 'row',
@@ -452,10 +464,6 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     padding: 24,
     paddingBottom: 36,
