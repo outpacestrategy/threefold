@@ -1,0 +1,41 @@
+export type GoalType = 'hard' | 'routine' | 'new';
+export type GoalStatus = 'complete' | 'partial' | 'not_done' | null;
+export type IdentityType = 'founder' | 'athlete' | 'builder' | 'creator' | 'other';
+export type AiTone = 'supportive' | 'direct' | 'analytical';
+export type FocusArea = 'health' | 'fitness' | 'career' | 'learning' | 'relationships' | 'creativity' | 'finance';
+
+export interface UserProfile {
+  name: string;
+  identityType: IdentityType;
+  identityStatement: string;
+  focusAreas: FocusArea[];
+  aiTone: AiTone;
+  onboardingComplete: boolean;
+}
+
+export interface DayEntry {
+  date: string;
+  hardGoal: string;
+  routineGoal: string;
+  newGoal: string;
+  hardStatus: GoalStatus;
+  routineStatus: GoalStatus;
+  newStatus: GoalStatus;
+  reflection?: string;
+  checkedIn: boolean;
+}
+
+export interface TomorrowEntry {
+  date: string;
+  hardGoal: string;
+  routineGoal: string;
+  newGoal: string;
+  hardFriendName?: string;
+  routineFriendName?: string;
+  newFriendName?: string;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}

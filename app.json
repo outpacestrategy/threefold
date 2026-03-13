@@ -25,6 +25,17 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      "expo-asset",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Allow Threefold to access your contacts to use Phone a Friend."
+        }
+      ]
+    ]
   }
 }
