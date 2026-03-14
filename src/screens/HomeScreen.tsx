@@ -2,18 +2,30 @@ import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
+  TextInput,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
   Pressable,
-  Dimensions,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { DayEntry } from '../types';
-import { getTodayEntry, promoteToToday } from '../lib/storage';
+import * as Contacts from 'expo-contacts';
+import * as SMS from 'expo-sms';
+import { DayEntry, TomorrowEntry, GoalType } from '../types';
+import {
+  getTodayEntry,
+  promoteToToday,
+  getTomorrowEntry,
+  saveTomorrowEntry,
+  getUserProfile,
+  getTomorrowDate,
+} from '../lib/storage';
 
 const SLEEP_OPTIONS = [
   { emoji: '🌧️', label: 'Awful' },
@@ -41,6 +53,16 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [sleepRating, setSleepRating] = useState<number | null>(null);
   const [stuckGoal, setStuckGoal] = useState<string | null>(null);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+
+  // Plan modal state
+  const [hardGoal, setHardGoal] = useState('');
+  const [routineGoal, setRoutineGoal] = useState('');
+  const [newGoal, setNewGoal] = useState('');
+  const [hardFriend, setHardFriend] = useState('');
+  const [routineFriend, setRoutineFriend] = useState('');
+  const [newFriend, setNewFriend] = useState('');
+  const [waitingFor, setWaitingFor] = useState<Record<string, string>>({});
 
   const loadData = async () => {
     setLoading(true);
@@ -55,6 +77,87 @@ export default function HomeScreen() {
       loadData();
     }, [])
   );
+
+  const openPlanModal = async () => {
+    const tm = await getTomorrowEntry();
+    if (tm) {
+      setHardGoal(tm.hardGoal || '');
+      setRoutineGoal(tm.routineGoal || '');
+      setNewGoal(tm.newGoal || '');
+      setHardFriend(tm.hardFriendName || '');
+      setRoutineFriend(tm.routineFriendName || '');
+      setNewFriend(tm.newFriendName || '');
+    } else {
+      setHardGoal('');
+      setRoutineGoal('');
+      setNewGoal('');
+      setHardFriend('');
+      setRoutineFriend('');
+      setNewFriend('');
+    }
+    setWaitingFor({});
+    setShowPlanModal(true);
+  };
+
+  const handleSavePlan = async () => {
+    if (!hardGoal.trim() || !routineGoal.trim() || !newGoal.trim()) {
+      Alert.alert('Set all three goals', 'Each slot needs a goal to plan your day.');
+      return;
+    }
+    const entry: TomorrowEntry = {
+      date: getTomorrowDate(),
+      hardGoal: hardGoal.trim(),
+      routineGoal: routineGoal.trim(),
+      newGoal: newGoal.trim(),
+      hardFriendName: hardFriend || undefined,
+      routineFriendName: routineFriend || undefined,
+      newFriendName: newFriend || undefined,
+    };
+    await saveTomorrowEntry(entry);
+    setShowPlanModal(false);
+    Alert.alert('Tomorrow is planned', "Rest easy — you've already won half the battle.");
+  };
+
+  const handlePhoneAFriend = async (goalType: GoalType) => {
+    const goalLabel = goalType === 'hard' ? 'Hard' : goalType === 'routine' ? 'Routine' : 'New';
+    try {
+      const { status } = await Contacts.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Contacts permission needed', 'Enable contacts in Settings to use Phone a Friend.');
+        return;
+      }
+      const { data } = await Contacts.getContactsAsync({
+        fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Name],
+      });
+      if (data.length > 0) {
+        const contact = data.find((c) => c.phoneNumbers && c.phoneNumbers.length > 0);
+        if (!contact || !contact.phoneNumbers) {
+          Alert.alert('No contacts with phone numbers found');
+          return;
+        }
+        const friendName = contact.name || 'Your friend';
+        const phone = contact.phoneNumbers[0].number || '';
+        const profile = await getUserProfile();
+        const userName = profile?.name || 'Your friend';
+
+        const isAvailable = await SMS.isAvailableAsync();
+        if (isAvailable) {
+          await SMS.sendSMSAsync(
+            [phone],
+            `${userName} is planning tomorrow and needs your help picking their ${goalLabel} goal. What should they do?`
+          );
+          if (goalType === 'hard') setHardFriend(friendName);
+          else if (goalType === 'routine') setRoutineFriend(friendName);
+          else setNewFriend(friendName);
+          setWaitingFor((prev) => ({ ...prev, [goalType]: friendName }));
+        } else {
+          Alert.alert('SMS not available', 'SMS is not available on this device.');
+        }
+      }
+    } catch {
+      Alert.alert('Could not access contacts');
+    }
+  };
 
   if (loading) {
     return (
@@ -154,9 +257,18 @@ export default function HomeScreen() {
             </View>
           );
         })}
+
+        {/* Plan tomorrow button */}
+        <TouchableOpacity
+          style={styles.planCta}
+          onPress={openPlanModal}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.planCtaText}>Plan tomorrow</Text>
+        </TouchableOpacity>
       </ScrollView>
 
-      {/* Bottom sheet modal */}
+      {/* ─── "I'm stuck" bottom sheet ─── */}
       <Modal
         visible={stuckGoal !== null}
         transparent
@@ -191,11 +303,90 @@ export default function HomeScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* ─── Plan Tomorrow modal ─── */}
+      <Modal
+        visible={showPlanModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPlanModal(false)}
+      >
+        <SafeAreaView style={styles.container}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+          >
+            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+              <View style={styles.planModalHeader}>
+                <Text style={styles.planModalTitle}>Plan tomorrow</Text>
+                <TouchableOpacity onPress={() => setShowPlanModal(false)}>
+                  <Text style={styles.planModalClose}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.planModalSubtitle}>
+                Set three intentional goals for tomorrow.
+              </Text>
+
+              {GOAL_CONFIG.map((cfg) => {
+                const goalValue =
+                  cfg.key === 'hard' ? hardGoal : cfg.key === 'routine' ? routineGoal : newGoal;
+                const setGoalValue =
+                  cfg.key === 'hard' ? setHardGoal : cfg.key === 'routine' ? setRoutineGoal : setNewGoal;
+                const friend =
+                  cfg.key === 'hard' ? hardFriend : cfg.key === 'routine' ? routineFriend : newFriend;
+                const waiting = waitingFor[cfg.key];
+
+                return (
+                  <View key={cfg.key} style={styles.planCard}>
+                    <View style={styles.goalHeader}>
+                      <Text style={styles.goalEmoji}>{cfg.emoji}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.goalLabel}>{cfg.label} goal</Text>
+                        <Text style={styles.goalHint}>{cfg.hint}</Text>
+                      </View>
+                    </View>
+
+                    {waiting && !goalValue ? (
+                      <View style={styles.waitingBox}>
+                        <Text style={styles.waitingText}>Waiting for {waiting}...</Text>
+                        <TouchableOpacity onPress={() => setGoalValue('')}>
+                          <Text style={styles.fillSelfLink}>Fill it yourself</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : null}
+
+                    <TextInput
+                      style={styles.planInput}
+                      placeholder="What's the goal?"
+                      placeholderTextColor="#A0A0A0"
+                      value={goalValue}
+                      onChangeText={setGoalValue}
+                    />
+
+                    {friend && goalValue ? (
+                      <Text style={styles.suggestedBy}>Suggested by {friend}</Text>
+                    ) : null}
+
+                    <TouchableOpacity
+                      style={styles.friendButton}
+                      onPress={() => handlePhoneAFriend(cfg.key)}
+                    >
+                      <Text style={styles.friendButtonText}>Phone a Friend</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+
+              <TouchableOpacity style={styles.lockInButton} onPress={handleSavePlan}>
+                <Text style={styles.lockInButtonText}>Lock in tomorrow</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
-
-const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -316,7 +507,21 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  /* Modal / Bottom sheet */
+  /* Plan tomorrow CTA */
+  planCta: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  planCtaText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  /* "I'm stuck" bottom sheet */
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.35)',
@@ -375,5 +580,97 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#F57F17',
+  },
+
+  /* Plan modal */
+  planModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  planModalTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  planModalClose: {
+    fontSize: 16,
+    color: '#6B6B6B',
+    fontWeight: '500',
+  },
+  planModalSubtitle: {
+    fontSize: 16,
+    color: '#6B6B6B',
+    marginBottom: 24,
+  },
+  planCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#EDEDEB',
+  },
+  planInput: {
+    backgroundColor: '#F9F9F7',
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 15,
+    color: '#1A1A1A',
+    borderWidth: 1,
+    borderColor: '#EDEDEB',
+  },
+  friendButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#F5F5F0',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EDEDEB',
+  },
+  friendButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#7A7A7A',
+  },
+  waitingBox: {
+    backgroundColor: '#FFF8E1',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  waitingText: {
+    fontSize: 14,
+    color: '#F57F17',
+    fontWeight: '500',
+  },
+  fillSelfLink: {
+    fontSize: 13,
+    color: '#1A1A1A',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  suggestedBy: {
+    fontSize: 12,
+    color: '#A0A0A0',
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
+  lockInButton: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  lockInButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
