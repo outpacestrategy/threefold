@@ -27,7 +27,13 @@ import {
   getUserProfile,
   getTomorrowDate,
   getHistory,
+  getTokenBalance,
+  spendToken,
+  addTokenHistoryEntry,
+  computeStreaks,
+  StreakInfo,
 } from '../lib/storage';
+import StreakBadge from '../components/StreakBadge';
 
 const SLEEP_OPTIONS = [
   { emoji: '🌧️', label: 'Awful' },
@@ -56,7 +62,8 @@ export default function HomeScreen() {
   const [sleepRating, setSleepRating] = useState<number | null>(null);
   const [stuckGoal, setStuckGoal] = useState<string | null>(null);
   const [showPlanModal, setShowPlanModal] = useState(false);
-  const [streak, setStreak] = useState(0);
+  const [streaks, setStreaks] = useState<StreakInfo>({ total: 0, hard: 0, routine: 0, new: 0 });
+  const [tokens, setTokens] = useState(0);
 
   // Plan modal state
   const [hardGoal, setHardGoal] = useState('');
@@ -73,14 +80,9 @@ export default function HomeScreen() {
     const t = await getTodayEntry();
     setToday(t);
     const history = await getHistory();
-    const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
-    let s = 0;
-    for (const e of sorted) {
-      if (!(e.hardGoal || e.routineGoal || e.newGoal)) continue;
-      if (e.checkedIn) s++;
-      else break;
-    }
-    setStreak(s);
+    setStreaks(computeStreaks(history));
+    const bal = await getTokenBalance();
+    setTokens(bal);
     setLoading(false);
   };
 
@@ -197,9 +199,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       {/* Top bar */}
       <View style={styles.topBar}>
-        <View style={styles.streakBadge}>
-          <Text style={styles.streakText}>↗ {streak} days</Text>
-        </View>
+        <StreakBadge streaks={streaks} />
         <View style={styles.avatar}>
           <Ionicons name="person" size={18} color="#7A7A7A" />
         </View>
@@ -302,7 +302,21 @@ export default function HomeScreen() {
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Need help deciding?</Text>
 
-            <TouchableOpacity style={styles.modalOption} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.modalOption}
+              activeOpacity={0.7}
+              onPress={async () => {
+                if (tokens <= 0) {
+                  Alert.alert('No tokens remaining', 'You need tokens to use this feature.');
+                  return;
+                }
+                const newBal = await spendToken();
+                setTokens(newBal);
+                await addTokenHistoryEntry('Recommend 3 tasks', -1);
+                setStuckGoal(null);
+                Alert.alert('Recommendations ready', 'AI suggestions have been generated for your goals.');
+              }}
+            >
               <View style={{ flex: 1 }}>
                 <Text style={styles.modalOptionLabel}>💡 Recommend 3 tasks</Text>
                 <Text style={styles.modalOptionSub}>
@@ -428,17 +442,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 8,
-  },
-  streakBadge: {
-    backgroundColor: '#E6F7F1',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
-  streakText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2AA87E',
+    zIndex: 10,
   },
   avatar: {
     width: 36,

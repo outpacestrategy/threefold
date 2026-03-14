@@ -12,8 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { getHistory, getTokenBalance, spendToken } from '../lib/storage';
+import { getHistory, getTokenBalance, spendToken, addTokenHistoryEntry, computeStreaks, StreakInfo } from '../lib/storage';
 import { DayEntry } from '../types';
+import StreakBadge from '../components/StreakBadge';
 
 type TabMode = 'weekly' | 'monthly';
 
@@ -92,6 +93,7 @@ export default function InsightsScreen() {
   const [mode, setMode] = useState<TabMode>('weekly');
   const [tokens, setTokens] = useState(0);
   const [diveModal, setDiveModal] = useState<{ topic: string } | null>(null);
+  const [streaks, setStreaks] = useState<StreakInfo>({ total: 0, hard: 0, routine: 0, new: 0 });
 
   useFocusEffect(
     useCallback(() => {
@@ -100,6 +102,7 @@ export default function InsightsScreen() {
         setHistory(h);
         const t = await getTokenBalance();
         setTokens(t);
+        setStreaks(computeStreaks(h));
       })();
     }, [])
   );
@@ -111,6 +114,7 @@ export default function InsightsScreen() {
     }
     const newBal = await spendToken();
     setTokens(newBal);
+    await addTokenHistoryEntry('Dive deeper: ' + (diveModal?.topic || ''), -1);
     setDiveModal(null);
     Alert.alert('Analysis generated', 'Your deep dive insight is ready.');
   };
@@ -138,6 +142,11 @@ export default function InsightsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Top bar */}
+      <View style={styles.topBar}>
+        <StreakBadge streaks={streaks} />
+      </View>
+
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.heading}>Insights</Text>
@@ -254,10 +263,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF9F7',
   },
 
+  /* Top bar */
+  topBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 8,
+    zIndex: 10,
+  },
+
   /* Header */
   header: {
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 4,
     paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#EDEDEB',

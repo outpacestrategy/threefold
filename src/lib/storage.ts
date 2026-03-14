@@ -11,7 +11,7 @@ const KEYS = {
   TOKEN_HISTORY: 'tokenHistory',
 };
 
-const DEFAULT_TOKENS = 87;
+const DEFAULT_TOKENS = 5;
 
 export async function getUserProfile(): Promise<UserProfile | null> {
   const raw = await AsyncStorage.getItem(KEYS.USER_PROFILE);
@@ -118,6 +118,28 @@ export interface TokenHistoryEntry {
 export async function getTokenHistory(): Promise<TokenHistoryEntry[]> {
   const raw = await AsyncStorage.getItem(KEYS.TOKEN_HISTORY);
   return raw ? JSON.parse(raw) : [];
+}
+
+export interface StreakInfo {
+  total: number;
+  hard: number;
+  routine: number;
+  new: number;
+}
+
+export function computeStreaks(history: DayEntry[]): StreakInfo {
+  const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
+  let total = 0, hard = 0, routine = 0, newStreak = 0;
+  let cT = true, cH = true, cR = true, cN = true;
+  for (const e of sorted) {
+    if (!(e.hardGoal || e.routineGoal || e.newGoal)) continue;
+    if (cT) { if (e.hardStatus === 'complete' && e.routineStatus === 'complete' && e.newStatus === 'complete') total++; else cT = false; }
+    if (cH) { if (e.hardStatus === 'complete') hard++; else cH = false; }
+    if (cR) { if (e.routineStatus === 'complete') routine++; else cR = false; }
+    if (cN) { if (e.newStatus === 'complete') newStreak++; else cN = false; }
+    if (!cT && !cH && !cR && !cN) break;
+  }
+  return { total, hard, routine, new: newStreak };
 }
 
 export async function addTokenHistoryEntry(label: string, amount: number): Promise<void> {

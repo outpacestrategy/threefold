@@ -11,8 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { getHistory, getTodayDate } from '../lib/storage';
+import { getHistory, getTodayDate, computeStreaks } from '../lib/storage';
 import { DayEntry, GoalStatus } from '../types';
+import StreakBadge from '../components/StreakBadge';
 
 const DAYS_OF_WEEK = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTH_NAMES = [
@@ -51,42 +52,6 @@ function formatDayHeader(dateStr: string): string {
   return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
 }
 
-function computeStreaks(history: DayEntry[]): {
-  total: number;
-  hard: number;
-  routine: number;
-  new: number;
-} {
-  const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
-  let total = 0, hard = 0, routine = 0, newStreak = 0;
-  let countingTotal = true, countingHard = true, countingRoutine = true, countingNew = true;
-
-  for (const entry of sorted) {
-    const hasGoals = entry.hardGoal || entry.routineGoal || entry.newGoal;
-    if (!hasGoals) continue;
-
-    if (countingTotal) {
-      const allDone = entry.hardStatus === 'complete' && entry.routineStatus === 'complete' && entry.newStatus === 'complete';
-      if (allDone) total++;
-      else countingTotal = false;
-    }
-    if (countingHard) {
-      if (entry.hardStatus === 'complete') hard++;
-      else countingHard = false;
-    }
-    if (countingRoutine) {
-      if (entry.routineStatus === 'complete') routine++;
-      else countingRoutine = false;
-    }
-    if (countingNew) {
-      if (entry.newStatus === 'complete') newStreak++;
-      else countingNew = false;
-    }
-    if (!countingTotal && !countingHard && !countingRoutine && !countingNew) break;
-  }
-
-  return { total, hard, routine, new: newStreak };
-}
 
 function getGoalStatusLabel(status: GoalStatus): string {
   if (status === 'complete') return 'Done';
@@ -99,7 +64,6 @@ export default function CalendarScreen() {
   const [history, setHistory] = useState<DayEntry[]>([]);
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<DayEntry | null>(null);
-  const [showStreaks, setShowStreaks] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -143,35 +107,11 @@ export default function CalendarScreen() {
     <SafeAreaView style={styles.container}>
       {/* Top bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.streakBadge}
-          onPress={() => setShowStreaks(!showStreaks)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.streakText}>↗ {streaks.total} days</Text>
-        </TouchableOpacity>
+        <StreakBadge streaks={streaks} />
         <View style={styles.avatar}>
           <Ionicons name="person" size={18} color="#7A7A7A" />
         </View>
       </View>
-
-      {/* Streak dropdown */}
-      {showStreaks && (
-        <View style={styles.streakDropdown}>
-          <Text style={styles.streakDropdownRow}>
-            Total: {streaks.total} days
-          </Text>
-          <Text style={[styles.streakDropdownRow, { color: '#FF6B6B' }]}>
-            🔥 Hard: {streaks.hard} days
-          </Text>
-          <Text style={[styles.streakDropdownRow, { color: '#4ECDC4' }]}>
-            🔄 Routine: {streaks.routine} days
-          </Text>
-          <Text style={[styles.streakDropdownRow, { color: '#45B7D1' }]}>
-            ✨ New: {streaks.new} days
-          </Text>
-        </View>
-      )}
 
       {/* Month nav */}
       <View style={styles.monthNav}>
@@ -342,17 +282,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 8,
-  },
-  streakBadge: {
-    backgroundColor: '#E6F7F1',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
-  streakText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2AA87E',
+    zIndex: 10,
   },
   avatar: {
     width: 36,
@@ -361,23 +291,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0EC',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-  /* Streak dropdown */
-  streakDropdown: {
-    marginHorizontal: 24,
-    marginBottom: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#EDEDEB',
-  },
-  streakDropdownRow: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 6,
   },
 
   /* Month nav */

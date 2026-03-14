@@ -12,8 +12,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { getHistory, getTokenBalance, spendToken } from '../lib/storage';
+import { getHistory, getTokenBalance, spendToken, addTokenHistoryEntry, computeStreaks, StreakInfo } from '../lib/storage';
 import { DayEntry } from '../types';
+import StreakBadge from '../components/StreakBadge';
+import TokenPurchaseModal from '../components/TokenPurchaseModal';
 
 const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -79,6 +81,8 @@ export default function StatsScreen() {
   const [history, setHistory] = useState<DayEntry[]>([]);
   const [tokens, setTokens] = useState(0);
   const [diveModal, setDiveModal] = useState<{ topic: string } | null>(null);
+  const [streaks, setStreaks] = useState<StreakInfo>({ total: 0, hard: 0, routine: 0, new: 0 });
+  const [showPurchase, setShowPurchase] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -87,6 +91,7 @@ export default function StatsScreen() {
         setHistory(h);
         const t = await getTokenBalance();
         setTokens(t);
+        setStreaks(computeStreaks(h));
       })();
     }, [])
   );
@@ -106,6 +111,7 @@ export default function StatsScreen() {
     }
     const newBal = await spendToken();
     setTokens(newBal);
+    await addTokenHistoryEntry('Dive deeper: ' + (diveModal?.topic || ''), -1);
     setDiveModal(null);
     Alert.alert('Analysis generated', 'Check the Insights tab for your deep dive.');
   };
@@ -114,12 +120,12 @@ export default function StatsScreen() {
     <SafeAreaView style={styles.container}>
       {/* Top bar */}
       <View style={styles.topBar}>
-        <Text style={styles.heading}>Stats</Text>
+        <StreakBadge streaks={streaks} />
         <View style={styles.topRight}>
           <TouchableOpacity style={styles.helpBtn}>
             <Ionicons name="help-circle-outline" size={24} color="#A0A0A0" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.tokenPill}>
+          <TouchableOpacity style={styles.tokenPill} onPress={() => setShowPurchase(true)}>
             <Text style={styles.tokenPillText}>⚡ {tokens} tokens</Text>
           </TouchableOpacity>
         </View>
@@ -229,6 +235,8 @@ export default function StatsScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      <TokenPurchaseModal visible={showPurchase} tokens={tokens} onClose={() => setShowPurchase(false)} />
     </SafeAreaView>
   );
 }
@@ -245,15 +253,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EDEDEB',
-  },
-  heading: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1A1A1A',
+    paddingTop: 12,
+    paddingBottom: 8,
+    zIndex: 10,
   },
   topRight: {
     flexDirection: 'row',

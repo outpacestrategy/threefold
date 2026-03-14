@@ -20,8 +20,13 @@ import {
   saveChatMessages,
   getTokenBalance,
   spendToken,
+  addTokenHistoryEntry,
+  getHistory,
+  computeStreaks,
+  StreakInfo,
 } from '../lib/storage';
 import { UserProfile, ChatMessage } from '../types';
+import StreakBadge from '../components/StreakBadge';
 
 const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY || 'OPENAI_API_KEY_PLACEHOLDER';
 
@@ -41,6 +46,7 @@ export default function CoachScreen() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [tokens, setTokens] = useState(0);
+  const [streaks, setStreaks] = useState<StreakInfo>({ total: 0, hard: 0, routine: 0, new: 0 });
   const flatListRef = useRef<FlatList>(null);
 
   useFocusEffect(
@@ -52,6 +58,8 @@ export default function CoachScreen() {
         setMessages(msgs as ChatMessage[]);
         const bal = await getTokenBalance();
         setTokens(bal);
+        const h = await getHistory();
+        setStreaks(computeStreaks(h));
       })();
     }, [])
   );
@@ -76,6 +84,7 @@ export default function CoachScreen() {
 
     const newBalance = await spendToken();
     setTokens(newBalance);
+    await addTokenHistoryEntry('Therapist chat message', -1);
 
     try {
       const systemPrompt = buildSystemPrompt(profile);
@@ -139,6 +148,11 @@ export default function CoachScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Top bar */}
+      <View style={styles.topBar}>
+        <StreakBadge streaks={streaks} />
+      </View>
+
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -227,10 +241,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF9F7',
   },
 
+  /* Top bar */
+  topBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 8,
+    zIndex: 10,
+  },
+
   /* Header */
   header: {
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 4,
     paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#EDEDEB',

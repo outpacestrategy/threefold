@@ -206,6 +206,27 @@
   .insights-rate-pill { background: #F5F5F0; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; }
   .insights-card-meta { font-size: 12px; color: #A0A0A0; font-weight: 500; }
 
+  /* ─── TOKEN PURCHASE MODAL ─── */
+  .purchase-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 40; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; padding: 24px; }
+  .purchase-overlay.open { opacity: 1; pointer-events: auto; }
+  .purchase-card { background: #fff; border-radius: 20px; padding: 24px; width: 100%; }
+  .purchase-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .purchase-title { font-size: 22px; font-weight: 700; color: #1A1A1A; }
+  .purchase-close { background: none; border: none; font-size: 22px; color: #7A7A7A; cursor: pointer; }
+  .purchase-balance { display: flex; justify-content: space-between; align-items: center; background: #FFF8E1; border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+  .purchase-bal-label { font-size: 14px; font-weight: 600; color: #1A1A1A; }
+  .purchase-bal-value { font-size: 16px; font-weight: 700; color: #F57F17; }
+  .purchase-body { font-size: 15px; color: #555; line-height: 22px; margin-bottom: 8px; }
+  .purchase-free { font-size: 13px; color: #2AA87E; font-weight: 500; margin-bottom: 20px; }
+  .purchase-tier { display: flex; align-items: center; background: #FAF9F7; border: 1px solid #EDEDEB; border-radius: 14px; padding: 16px; margin-bottom: 10px; cursor: pointer; }
+  .purchase-tier:hover { background: #F0EFEC; }
+  .purchase-tier-title { display: flex; align-items: center; gap: 8px; }
+  .purchase-tier-tokens { font-size: 16px; font-weight: 700; color: #1A1A1A; }
+  .purchase-best { background: #E6F7F1; border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 700; color: #2AA87E; letter-spacing: .5px; }
+  .purchase-tier-per { font-size: 12px; color: #A0A0A0; margin-top: 2px; }
+  .purchase-tier-price { font-size: 18px; font-weight: 700; color: #1A1A1A; margin-left: auto; }
+  .purchase-footer { font-size: 12px; color: #A0A0A0; text-align: center; margin-top: 8px; }
+
   /* ─── SETTINGS / PROFILE ─── */
   .settings-overlay { position: absolute; inset: 0; z-index: 35; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; }
   .settings-overlay.open { opacity: 1; pointer-events: auto; }
@@ -371,10 +392,17 @@
   <!-- ═══ STATS SCREEN ═══ -->
   <div class="stats-screen" id="screen-stats">
     <div class="stats-topbar">
-      <div class="stats-heading">Stats</div>
+      <div class="streak-badge" onclick="toggleStreaks()"><span class="streak-text">↗ 12 days</span>
+        <div class="streak-dropdown" id="streakDD2">
+          <div class="streak-dd-row">Total: 12 days</div>
+          <div class="streak-dd-row" style="color:#FF6B6B">🔥 Hard: 14 days</div>
+          <div class="streak-dd-row" style="color:#4ECDC4">🔄 Routine: 18 days</div>
+          <div class="streak-dd-row" style="color:#45B7D1">✨ New: 9 days</div>
+        </div>
+      </div>
       <div class="stats-right">
         <div class="stats-help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 015.12 1.5c0 1.5-2.12 2-2.12 3.5"/><circle cx="12" cy="17.5" r=".5" fill="currentColor"/></svg></div>
-        <div class="stats-token-pill" onclick="openDive('Token balance')">⚡ 87 tokens</div>
+        <div class="stats-token-pill" onclick="openPurchase()">⚡ 5 tokens</div>
       </div>
     </div>
     <div class="stats-scroll">
@@ -439,6 +467,16 @@
   </div>
   <!-- ═══ INSIGHTS SCREEN ═══ -->
   <div class="insights-screen" id="screen-insights">
+    <div style="display:flex;padding:12px 24px 8px;">
+      <div class="streak-badge" onclick="toggleStreaks()"><span class="streak-text">↗ 12 days</span>
+        <div class="streak-dropdown" id="streakDD3">
+          <div class="streak-dd-row">Total: 12 days</div>
+          <div class="streak-dd-row" style="color:#FF6B6B">🔥 Hard: 14 days</div>
+          <div class="streak-dd-row" style="color:#4ECDC4">🔄 Routine: 18 days</div>
+          <div class="streak-dd-row" style="color:#45B7D1">✨ New: 9 days</div>
+        </div>
+      </div>
+    </div>
     <div class="insights-header">
       <div class="insights-heading">Insights</div>
       <div class="insights-subheading">Receipts of growth. No edits. Just what the data showed.</div>
@@ -517,8 +555,18 @@
 
   <!-- ═══ CHAT / REFLECT SCREEN ═══ -->
   <div class="chat-screen" id="screen-chat">
+    <div style="display:flex;padding:12px 24px 8px;flex-shrink:0;">
+      <div class="streak-badge" onclick="toggleStreaks()"><span class="streak-text">↗ 12 days</span>
+        <div class="streak-dropdown" id="streakDD4">
+          <div class="streak-dd-row">Total: 12 days</div>
+          <div class="streak-dd-row" style="color:#FF6B6B">🔥 Hard: 14 days</div>
+          <div class="streak-dd-row" style="color:#4ECDC4">🔄 Routine: 18 days</div>
+          <div class="streak-dd-row" style="color:#45B7D1">✨ New: 9 days</div>
+        </div>
+      </div>
+    </div>
     <div class="chat-header">
-      <div class="chat-header-top"><div class="chat-heading">Reflect</div><div class="chat-token-badge">🪙 87 tokens</div></div>
+      <div class="chat-header-top"><div class="chat-heading">Reflect</div><div class="chat-token-badge">🪙 5 tokens</div></div>
       <div class="chat-subheading">Talk through what's on your mind. Each message uses 1 token.</div>
     </div>
     <div class="chat-body">
@@ -586,6 +634,35 @@
     </div>
   </div>
 
+  <!-- ═══ TOKEN PURCHASE MODAL ═══ -->
+  <div class="purchase-overlay" id="purchaseModal">
+    <div class="purchase-card">
+      <div class="purchase-top">
+        <div class="purchase-title">Get Tokens</div>
+        <button class="purchase-close" onclick="closePurchase()">✕</button>
+      </div>
+      <div class="purchase-balance">
+        <span class="purchase-bal-label">Current balance</span>
+        <span class="purchase-bal-value">🪙 5</span>
+      </div>
+      <div class="purchase-body">Tokens power the Dive Deeper AI analysis. Each deep insight costs 1 token.</div>
+      <div class="purchase-free">You receive 5 free tokens every month automatically.</div>
+      <div class="purchase-tier">
+        <div style="flex:1"><div class="purchase-tier-title"><span class="purchase-tier-tokens">10 tokens</span></div><div class="purchase-tier-per">$0.30/token</div></div>
+        <div class="purchase-tier-price">$2.99</div>
+      </div>
+      <div class="purchase-tier">
+        <div style="flex:1"><div class="purchase-tier-title"><span class="purchase-tier-tokens">25 tokens</span><span class="purchase-best">BEST VALUE</span></div><div class="purchase-tier-per">$0.20/token</div></div>
+        <div class="purchase-tier-price">$4.99</div>
+      </div>
+      <div class="purchase-tier">
+        <div style="flex:1"><div class="purchase-tier-title"><span class="purchase-tier-tokens">60 tokens</span></div><div class="purchase-tier-per">$0.17/token</div></div>
+        <div class="purchase-tier-price">$9.99</div>
+      </div>
+      <div class="purchase-footer">Secure payments powered by Stripe. Tokens never expire.</div>
+    </div>
+  </div>
+
   <!-- ═══ SETTINGS / PROFILE MODAL ═══ -->
   <div class="settings-overlay" id="settingsModal">
     <div class="settings-modal">
@@ -596,12 +673,12 @@
         </div>
 
         <!-- Token card -->
-        <div class="token-card">
+        <div class="token-card" onclick="openPurchase()">
           <div class="token-card-left">
             <span class="token-card-icon">🪙</span>
             <div><div class="token-card-title">Tokens</div><div class="token-card-sub">For AI deep insights</div></div>
           </div>
-          <div class="token-card-balance">87</div>
+          <div class="token-card-balance">5</div>
         </div>
 
         <!-- Token History -->
@@ -789,7 +866,9 @@ renderCalendar();
 
 function changeMonth(dir) { calMonth += dir; if (calMonth < 0) { calMonth = 11; calYear--; } if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
 
-function toggleStreaks() { document.getElementById('streakDD').classList.toggle('show'); }
+function toggleStreaks() {
+  document.querySelectorAll('.streak-dropdown').forEach(dd => dd.classList.toggle('show'));
+}
 
 function openCalDetail(ds, entry) {
   const d = new Date(ds + 'T12:00:00');
@@ -826,6 +905,10 @@ function closeDive() { document.getElementById('diveModal').classList.remove('op
 /* Settings */
 function openSettings() { document.getElementById('settingsModal').classList.add('open'); }
 function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+/* Token purchase */
+function openPurchase() { document.getElementById('purchaseModal').classList.add('open'); }
+function closePurchase() { document.getElementById('purchaseModal').classList.remove('open'); }
+
 function pickOption(el, group) {
   const parent = el.parentElement;
   const siblings = parent.querySelectorAll('.option-row');
