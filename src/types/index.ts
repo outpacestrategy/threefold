@@ -2,7 +2,8 @@ export type GoalType = 'hard' | 'routine' | 'new';
 export type GoalStatus = 'complete' | 'partial' | 'not_done' | null;
 export type IdentityType = 'founder' | 'athlete' | 'builder' | 'creator' | 'other';
 export type AiTone = 'supportive' | 'direct' | 'analytical';
-export type FocusArea = 'health' | 'fitness' | 'career' | 'learning' | 'relationships' | 'creativity' | 'finance';
+export type FocusArea = 'health' | 'fitness' | 'career' | 'learning' | 'relationships' | 'creativity' | 'craft' | 'finance';
+export type GoalDifficulty = 'light' | 'moderate' | 'ambitious';
 
 export interface UserProfile {
   name: string;

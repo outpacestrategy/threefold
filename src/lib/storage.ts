@@ -8,6 +8,7 @@ const KEYS = {
   HISTORY: 'history',
   CHAT_MESSAGES: 'chatMessages',
   TOKEN_BALANCE: 'tokenBalance',
+  TOKEN_HISTORY: 'tokenHistory',
 };
 
 const DEFAULT_TOKENS = 87;
@@ -106,4 +107,21 @@ export async function spendToken(): Promise<number> {
 
 export async function setTokenBalance(amount: number): Promise<void> {
   await AsyncStorage.setItem(KEYS.TOKEN_BALANCE, String(amount));
+}
+
+export interface TokenHistoryEntry {
+  label: string;
+  date: string;
+  amount: number;
+}
+
+export async function getTokenHistory(): Promise<TokenHistoryEntry[]> {
+  const raw = await AsyncStorage.getItem(KEYS.TOKEN_HISTORY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+export async function addTokenHistoryEntry(label: string, amount: number): Promise<void> {
+  const history = await getTokenHistory();
+  history.unshift({ label, date: new Date().toISOString(), amount });
+  await AsyncStorage.setItem(KEYS.TOKEN_HISTORY, JSON.stringify(history.slice(0, 100)));
 }
