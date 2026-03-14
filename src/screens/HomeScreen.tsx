@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Contacts from 'expo-contacts';
 import * as SMS from 'expo-sms';
 import { DayEntry, TomorrowEntry, GoalType } from '../types';
@@ -25,6 +26,7 @@ import {
   saveTomorrowEntry,
   getUserProfile,
   getTomorrowDate,
+  getHistory,
 } from '../lib/storage';
 
 const SLEEP_OPTIONS = [
@@ -54,6 +56,7 @@ export default function HomeScreen() {
   const [sleepRating, setSleepRating] = useState<number | null>(null);
   const [stuckGoal, setStuckGoal] = useState<string | null>(null);
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [streak, setStreak] = useState(0);
 
   // Plan modal state
   const [hardGoal, setHardGoal] = useState('');
@@ -69,6 +72,15 @@ export default function HomeScreen() {
     await promoteToToday();
     const t = await getTodayEntry();
     setToday(t);
+    const history = await getHistory();
+    const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
+    let s = 0;
+    for (const e of sorted) {
+      if (!(e.hardGoal || e.routineGoal || e.newGoal)) continue;
+      if (e.checkedIn) s++;
+      else break;
+    }
+    setStreak(s);
     setLoading(false);
   };
 
@@ -183,6 +195,16 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Top bar */}
+      <View style={styles.topBar}>
+        <View style={styles.streakBadge}>
+          <Text style={styles.streakText}>↗ {streak} days</Text>
+        </View>
+        <View style={styles.avatar}>
+          <Ionicons name="person" size={18} color="#7A7A7A" />
+        </View>
+      </View>
+
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <Text style={styles.greeting}>{getGreeting()}</Text>
@@ -398,9 +420,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  /* Top bar */
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  streakBadge: {
+    backgroundColor: '#E6F7F1',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  streakText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2AA87E',
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0F0EC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   content: {
     padding: 24,
-    paddingTop: 32,
+    paddingTop: 16,
     paddingBottom: 40,
   },
 

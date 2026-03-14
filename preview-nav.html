@@ -299,7 +299,13 @@
 
   <!-- ═══ TODAY SCREEN ═══ -->
   <div class="screen-content" id="screen-today">
-    <div class="screen-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 24px 8px;">
+      <div class="streak-badge"><span class="streak-text">↗ 12 days</span></div>
+      <div class="cal-avatar" onclick="openSettings()" style="cursor:pointer">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;color:#7A7A7A"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>
+      </div>
+    </div>
+    <div class="screen-inner" style="padding-top:8px;">
       <div class="greeting">Good evening</div>
       <div class="subtitle">Set 3 intentions for today</div>
       <div class="sleep-card">
