@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Threefold — Nav Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #E8E6E1; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif; }
+
+  .phone {
+    width: 375px; height: 812px; background: #FAF9F7; border-radius: 44px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.05);
+    display: flex; flex-direction: column; overflow: hidden; position: relative;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 54px; padding: 14px 28px 0; display: flex; justify-content: space-between; align-items: center;
+    font-size: 15px; font-weight: 600; color: #1A1A1A;
+  }
+  .status-icons { display: flex; gap: 5px; align-items: center; }
+  .status-icons svg { width: 16px; height: 16px; }
+
+  /* Notch */
+  .notch {
+    width: 126px; height: 34px; background: #1A1A1A; border-radius: 0 0 20px 20px;
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  }
+
+  /* Screen content */
+  .screen-content {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
+  }
+  .screen-title { font-size: 28px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
+  .screen-subtitle { font-size: 16px; color: #6B6B6B; }
+
+  /* Goal cards placeholder */
+  .goals { width: 100%; margin-top: 32px; display: flex; flex-direction: column; gap: 12px; }
+  .goal-card {
+    background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .goal-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .goal-dot.green { background: #34C759; }
+  .goal-dot.amber { background: #FFBD2E; }
+  .goal-dot.gray  { background: #D1D1D6; }
+  .goal-text { font-size: 15px; color: #1A1A1A; font-weight: 500; }
+  .goal-meta { font-size: 12px; color: #A0A0A0; margin-top: 2px; }
+
+  /* Home indicator */
+  .home-indicator {
+    width: 134px; height: 5px; background: #1A1A1A; border-radius: 100px;
+    margin: 8px auto 8px;
+  }
+
+  /* ─── Bottom Tab Bar ─── */
+  .tab-bar {
+    display: flex; justify-content: space-around; align-items: flex-end;
+    padding: 8px 0 28px; background: #FAF9F7;
+    border-top: 1px solid #EDEDEB;
+  }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none;
+    flex: 1;
+  }
+  .tab svg { width: 24px; height: 24px; }
+  .tab .label { font-size: 11px; font-weight: 500; }
+
+  /* Active / inactive */
+  .tab.active svg { color: #1A1A1A; }
+  .tab.active .label { color: #1A1A1A; font-weight: 700; }
+  .tab.inactive svg { color: #A0A0A0; }
+  .tab.inactive .label { color: #A0A0A0; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="notch"></div>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="status-icons">
+      <svg viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="5" y="1" width="3" height="11" rx="1"/><rect x="10" y="4" width="3" height="8" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 5.5a7 7 0 0114 0 .5.5 0 01-.85.35 5.5 5.5 0 00-12.3 0A.5.5 0 011 5.5z"/><path d="M4 8.5a4 4 0 018 0 .5.5 0 01-.85.35 2.5 2.5 0 00-6.3 0A.5.5 0 014 8.5z"/><circle cx="8" cy="11" r="1.5"/></svg>
+      <svg viewBox="0 0 25 12" fill="currentColor"><rect x="0" y="1" width="21" height="10" rx="2.5" stroke="currentColor" stroke-width="1" fill="none"/><rect x="2" y="3" width="14" height="6" rx="1" fill="currentColor"/><path d="M23 4.5v3a1.5 1.5 0 000-3z"/></svg>
+    </div>
+  </div>
+
+  <!-- Screen: "Today" active by default -->
+  <div class="screen-content" id="screen-area">
+    <div id="screen-today">
+      <div style="text-align:center">
+        <div class="screen-title">Today</div>
+        <div class="screen-subtitle">Good morning — here are your 3 goals</div>
+      </div>
+      <div class="goals">
+        <div class="goal-card">
+          <div class="goal-dot green"></div>
+          <div><div class="goal-text">30 min morning run</div><div class="goal-meta">Completed</div></div>
+        </div>
+        <div class="goal-card">
+          <div class="goal-dot amber"></div>
+          <div><div class="goal-text">Write project proposal</div><div class="goal-meta">In progress</div></div>
+        </div>
+        <div class="goal-card">
+          <div class="goal-dot gray"></div>
+          <div><div class="goal-text">Read 20 pages</div><div class="goal-meta">Not started</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="screen-calendar" style="display:none; text-align:center;">
+      <div class="screen-title">Calendar</div>
+      <div class="screen-subtitle">Your goal tracking history</div>
+    </div>
+    <div id="screen-stats" style="display:none; text-align:center;">
+      <div class="screen-title">Stats</div>
+      <div class="screen-subtitle">Your progress at a glance</div>
+    </div>
+    <div id="screen-insights" style="display:none; text-align:center;">
+      <div class="screen-title">Insights</div>
+      <div class="screen-subtitle">Patterns and reflections</div>
+    </div>
+    <div id="screen-chat" style="display:none; text-align:center;">
+      <div class="screen-title">Chat</div>
+      <div class="screen-subtitle">Talk to your AI coach</div>
+    </div>
+  </div>
+
+  <!-- ─── Bottom Tab Bar ─── -->
+  <div class="tab-bar">
+
+    <!-- Calendar -->
+    <div class="tab inactive" data-screen="calendar" onclick="switchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+        <rect x="7" y="14" width="3" height="3" rx="0.5"/><rect x="14" y="14" width="3" height="3" rx="0.5"/>
+      </svg>
+      <span class="label">Calendar</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="tab inactive" data-screen="stats" onclick="switchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="14" width="4" height="7" rx="1"/>
+        <rect x="10" y="9" width="4" height="12" rx="1"/>
+        <rect x="16" y="4" width="4" height="17" rx="1"/>
+      </svg>
+      <span class="label">Stats</span>
+    </div>
+
+    <!-- Today (active center tab) -->
+    <div class="tab active" data-screen="today" onclick="switchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="12" cy="12" r="10"/>
+        <circle cx="12" cy="12" r="6"/>
+        <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+      </svg>
+      <span class="label">Today</span>
+    </div>
+
+    <!-- Insights -->
+    <div class="tab inactive" data-screen="insights" onclick="switchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21h6"/><path d="M10 17h4"/>
+        <path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/>
+      </svg>
+      <span class="label">Insights</span>
+    </div>
+
+    <!-- Chat -->
+    <div class="tab inactive" data-screen="chat" onclick="switchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+      </svg>
+      <span class="label">Chat</span>
+    </div>
+
+  </div>
+
+  <div class="home-indicator"></div>
+</div>
+
+<script>
+function switchTab(el) {
+  document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active'); t.classList.add('inactive'); });
+  el.classList.remove('inactive'); el.classList.add('active');
+
+  const screens = ['today','calendar','stats','insights','chat'];
+  screens.forEach(s => { document.getElementById('screen-' + s).style.display = 'none'; });
+  document.getElementById('screen-' + el.dataset.screen).style.display = '';
+}
+</script>
+
+</body>
+</html>

@@ -122,7 +122,7 @@ export default function HomeScreen({ navigation }: any) {
             </Text>
             <TouchableOpacity
               style={styles.planButton}
-              onPress={() => navigation.navigate('Plan')}
+              onPress={() => {}}
             >
               <Text style={styles.planButtonText}>Plan tomorrow</Text>
             </TouchableOpacity>

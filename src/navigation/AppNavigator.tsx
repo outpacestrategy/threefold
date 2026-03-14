@@ -1,39 +1,39 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import CalendarScreen from '../screens/CalendarScreen';
+import StatsScreen from '../screens/StatsScreen';
 import HomeScreen from '../screens/HomeScreen';
-import PlanScreen from '../screens/PlanScreen';
+import InsightsScreen from '../screens/InsightsScreen';
 import CoachScreen from '../screens/CoachScreen';
-import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
-  const labels: Record<string, string> = {
-    Home: 'H',
-    Plan: 'P',
-    Coach: 'C',
-    Profile: 'U',
-  };
-  return (
-    <Text
-      style={{
-        fontSize: 18,
-        fontWeight: '700',
-        color: focused ? '#1A1A1A' : '#A0A0A0',
-      }}
-    >
-      {labels[label] || '?'}
-    </Text>
-  );
-}
+const TAB_ICONS: Record<string, { focused: string; unfocused: string }> = {
+  Calendar: { focused: 'calendar', unfocused: 'calendar-outline' },
+  Stats: { focused: 'bar-chart', unfocused: 'bar-chart-outline' },
+  Today: { focused: 'radio-button-on', unfocused: 'radio-button-off' },
+  Insights: { focused: 'bulb', unfocused: 'bulb-outline' },
+  Chat: { focused: 'chatbubble', unfocused: 'chatbubble-outline' },
+};
 
 export default function AppNavigator() {
   return (
     <Tab.Navigator
+      initialRouteName="Today"
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarIcon: ({ focused }) => <TabIcon label={route.name} focused={focused} />,
+        tabBarIcon: ({ focused, size }) => {
+          const icons = TAB_ICONS[route.name];
+          const iconName = focused ? icons.focused : icons.unfocused;
+          return (
+            <Ionicons
+              name={iconName as any}
+              size={22}
+              color={focused ? '#1A1A1A' : '#A0A0A0'}
+            />
+          );
+        },
         tabBarActiveTintColor: '#1A1A1A',
         tabBarInactiveTintColor: '#A0A0A0',
         tabBarStyle: {
@@ -47,10 +47,11 @@ export default function AppNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Plan" component={PlanScreen} />
-      <Tab.Screen name="Coach" component={CoachScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Calendar" component={CalendarScreen} />
+      <Tab.Screen name="Stats" component={StatsScreen} />
+      <Tab.Screen name="Today" component={HomeScreen} />
+      <Tab.Screen name="Insights" component={InsightsScreen} />
+      <Tab.Screen name="Chat" component={CoachScreen} />
     </Tab.Navigator>
   );
 }
