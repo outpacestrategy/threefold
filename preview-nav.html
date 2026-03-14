@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Threefold — Today Screen Preview</title>
+<title>Threefold — App Preview</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #E8E6E1; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif; }
@@ -13,118 +13,130 @@
     box-shadow: 0 20px 60px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.05);
     display: flex; flex-direction: column; overflow: hidden; position: relative;
   }
-
-  .notch {
-    width: 126px; height: 34px; background: #1A1A1A; border-radius: 0 0 20px 20px;
-    position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10;
-  }
-
-  .status-bar {
-    height: 54px; padding: 14px 28px 0; display: flex; justify-content: space-between; align-items: center;
-    font-size: 15px; font-weight: 600; color: #1A1A1A; flex-shrink: 0;
-  }
+  .notch { width: 126px; height: 34px; background: #1A1A1A; border-radius: 0 0 20px 20px; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10; }
+  .status-bar { height: 54px; padding: 14px 28px 0; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; }
   .status-icons { display: flex; gap: 5px; align-items: center; }
   .status-icons svg { width: 16px; height: 16px; }
 
-  /* Scrollable screen area */
+  /* Shared scrollable screen */
   .screen-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .screen-content::-webkit-scrollbar { display: none; }
   .screen-inner { padding: 24px; padding-bottom: 20px; }
 
-  /* Header */
+  /* ─── TODAY ─── */
   .greeting { font-size: 28px; font-weight: 700; color: #1A1A1A; margin-bottom: 4px; }
   .subtitle { font-size: 16px; color: #6B6B6B; margin-bottom: 24px; }
-
-  /* Sleep card */
   .sleep-card { background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 20px; margin-bottom: 20px; }
   .sleep-label { font-size: 15px; font-weight: 600; color: #1A1A1A; margin-bottom: 14px; }
   .sleep-row { display: flex; justify-content: space-between; }
-  .sleep-option {
-    width: 52px; height: 52px; border-radius: 14px; background: #F5F5F0;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    border: 2px solid transparent; transition: all .15s;
-  }
+  .sleep-option { width: 52px; height: 52px; border-radius: 14px; background: #F5F5F0; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid transparent; transition: all .15s; }
   .sleep-option:hover { background: #EEEDEA; }
   .sleep-option.active { background: #E8E6E1; border-color: #1A1A1A; }
   .sleep-emoji { font-size: 24px; line-height: 1; }
-
-  /* Goal card */
   .goal-card { background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 18px; margin-bottom: 12px; }
   .goal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .goal-emoji { font-size: 20px; line-height: 1; flex-shrink: 0; }
   .goal-label { font-size: 15px; font-weight: 600; color: #1A1A1A; }
   .goal-hint { font-size: 12px; color: #A0A0A0; margin-top: 1px; }
   .goal-text { font-size: 16px; color: #1A1A1A; line-height: 22px; padding-left: 30px; margin-bottom: 10px; }
-  .stuck-btn {
-    font-size: 14px; color: #6B6B6B; font-weight: 500; cursor: pointer;
-    background: none; border: none; padding: 0; margin-left: 30px;
-  }
+  .stuck-btn { font-size: 14px; color: #6B6B6B; font-weight: 500; cursor: pointer; background: none; border: none; padding: 0; margin-left: 30px; }
   .stuck-btn:hover { color: #1A1A1A; }
-
-  /* Plan tomorrow CTA */
-  .plan-cta {
-    display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 14px;
-    padding: 16px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 8px;
-  }
+  .plan-cta { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 8px; }
   .plan-cta:hover { background: #333; }
 
-  /* Tab bar */
-  .tab-bar {
-    display: flex; justify-content: space-around; align-items: flex-end;
-    padding: 8px 0 28px; background: #FAF9F7; border-top: 1px solid #EDEDEB; flex-shrink: 0;
-  }
-  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; user-select: none; flex: 1; }
-  .tab svg { width: 24px; height: 24px; }
-  .tab .label { font-size: 11px; font-weight: 500; }
-  .tab.active svg { color: #1A1A1A; }
-  .tab.active .label { color: #1A1A1A; font-weight: 700; }
-  .tab.inactive svg { color: #A0A0A0; }
-  .tab.inactive .label { color: #A0A0A0; }
+  /* ─── CALENDAR ─── */
+  .cal-screen { display: none; flex-direction: column; flex: 1; }
+  .cal-topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px 8px; flex-shrink: 0; }
+  .streak-badge { background: #E6F7F1; border-radius: 20px; padding: 7px 14px; cursor: pointer; position: relative; }
+  .streak-text { font-size: 14px; font-weight: 600; color: #2AA87E; }
+  .streak-dropdown { display: none; position: absolute; top: 40px; left: 0; background: #fff; border: 1px solid #EDEDEB; border-radius: 12px; padding: 14px; width: 200px; z-index: 5; box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+  .streak-dropdown.show { display: block; }
+  .streak-dd-row { font-size: 14px; font-weight: 600; color: #1A1A1A; margin-bottom: 6px; }
+  .streak-dd-row:last-child { margin-bottom: 0; }
+  .cal-avatar { width: 36px; height: 36px; border-radius: 18px; background: #F0F0EC; display: flex; align-items: center; justify-content: center; }
+  .cal-avatar svg { width: 18px; height: 18px; color: #7A7A7A; }
+  .month-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; flex-shrink: 0; }
+  .month-label { font-size: 20px; font-weight: 700; color: #1A1A1A; }
+  .month-arrow { background: none; border: none; cursor: pointer; font-size: 20px; color: #1A1A1A; padding: 4px 8px; }
+  .week-hdr { display: flex; padding: 0 16px; margin-bottom: 6px; flex-shrink: 0; }
+  .week-hdr span { flex: 1; text-align: center; font-size: 12px; font-weight: 600; color: #A0A0A0; }
+  .cal-grid { display: flex; flex-wrap: wrap; padding: 0 16px; flex-shrink: 0; }
+  .cal-cell { width: calc(100% / 7); aspect-ratio: 1; padding: 3px; }
+  .cal-day { width: 100%; height: 100%; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+  .cal-day.empty { cursor: default; }
+  .cal-day.none { background: #F0F0EC; color: #1A1A1A; }
+  .cal-day.all { background: #34C759; color: #fff; }
+  .cal-day.partial { background: #FFBD2E; color: #fff; }
+  .cal-day.missed { background: #C62828; color: #fff; }
+  .cal-day.future { opacity: .4; cursor: default; }
+  .cal-day.today { outline: 2px solid #1A1A1A; outline-offset: -2px; }
+  .cal-legend { display: flex; justify-content: center; gap: 20px; padding: 16px 0; flex-shrink: 0; }
+  .cal-legend-item { display: flex; align-items: center; gap: 6px; }
+  .cal-legend-dot { width: 10px; height: 10px; border-radius: 5px; }
+  .cal-legend-label { font-size: 12px; color: #7A7A7A; font-weight: 500; }
 
-  .home-indicator { width: 134px; height: 5px; background: #1A1A1A; border-radius: 100px; margin: 8px auto 8px; flex-shrink: 0; }
-
-  /* ─── Shared modal overlay ─── */
-  .modal-overlay {
+  /* Calendar day detail sheet */
+  .cal-detail-overlay {
     position: absolute; inset: 0; background: rgba(0,0,0,.35);
-    display: flex; align-items: flex-end; z-index: 20;
+    display: flex; align-items: flex-end; z-index: 25;
     opacity: 0; pointer-events: none; transition: opacity .2s;
     border-radius: 44px; overflow: hidden;
   }
-  .modal-overlay.open { opacity: 1; pointer-events: auto; }
-
-  /* ─── "I'm stuck" bottom sheet ─── */
-  .modal-sheet {
+  .cal-detail-overlay.open { opacity: 1; pointer-events: auto; }
+  .cal-detail-sheet {
     background: #fff; border-radius: 20px 20px 0 0; padding: 24px; padding-bottom: 40px; width: 100%;
     transform: translateY(100%); transition: transform .25s ease-out;
   }
+  .cal-detail-overlay.open .cal-detail-sheet { transform: translateY(0); }
+  .cal-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .cal-detail-date { font-size: 20px; font-weight: 700; color: #1A1A1A; }
+  .cal-detail-close { background: none; border: none; cursor: pointer; font-size: 22px; color: #7A7A7A; }
+  .cal-goal-row { background: #FAF9F7; border: 1px solid #EDEDEB; border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+  .cal-goal-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .cal-goal-type { font-size: 12px; font-weight: 700; letter-spacing: .5px; }
+  .cal-goal-status { font-size: 12px; font-weight: 600; }
+  .cal-goal-text { font-size: 15px; color: #1A1A1A; line-height: 22px; }
+  .cal-goal-text.dimmed { color: #A0A0A0; }
+
+  /* ─── CHAT / REFLECT ─── */
+  .chat-screen { display: none; flex-direction: column; flex: 1; }
+  .chat-header { padding: 16px 24px 14px; border-bottom: 1px solid #EDEDEB; flex-shrink: 0; }
+  .chat-header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .chat-heading { font-size: 28px; font-weight: 700; color: #1A1A1A; }
+  .chat-token-badge { background: #FFF8E1; border-radius: 10px; padding: 5px 10px; font-size: 13px; font-weight: 600; color: #F57F17; }
+  .chat-subheading { font-size: 14px; color: #7A7A7A; line-height: 20px; }
+  .chat-body { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; overflow-y: auto; }
+  .chat-empty-icon { width: 80px; height: 80px; border-radius: 40px; background: #F5F5F0; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+  .chat-empty-icon svg { width: 48px; height: 48px; color: #C0C0C0; }
+  .chat-empty-title { font-size: 18px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
+  .chat-empty-desc { font-size: 15px; color: #7A7A7A; text-align: center; line-height: 22px; padding: 0 16px; margin-bottom: 24px; }
+  .chip-col { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .prompt-chip { background: #fff; border: 1px solid #EDEDEB; border-radius: 12px; padding: 12px 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 500; color: #1A1A1A; }
+  .prompt-chip:hover { background: #F5F5F0; }
+  .chat-input-row { display: flex; align-items: flex-end; gap: 10px; padding: 16px; padding-bottom: 24px; border-top: 1px solid #EDEDEB; background: #FAF9F7; flex-shrink: 0; }
+  .chat-input { flex: 1; background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 14px; font-size: 15px; color: #1A1A1A; font-family: inherit; outline: none; resize: none; }
+  .chat-input:focus { border-color: #C0C0C0; }
+  .chat-send-btn { width: 44px; height: 44px; border-radius: 12px; background: #1A1A1A; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .chat-send-btn:hover { background: #333; }
+  .chat-send-btn svg { width: 20px; height: 20px; color: #fff; }
+
+  /* ─── Shared modals ─── */
+  .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; z-index: 20; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .modal-sheet { background: #fff; border-radius: 20px 20px 0 0; padding: 24px; padding-bottom: 40px; width: 100%; transform: translateY(100%); transition: transform .25s ease-out; }
   .modal-overlay.open .modal-sheet { transform: translateY(0); }
   .modal-handle { width: 40px; height: 4px; border-radius: 2px; background: #D1D1D6; margin: 0 auto 20px; }
   .modal-title { font-size: 20px; font-weight: 700; color: #1A1A1A; margin-bottom: 20px; }
-  .modal-option {
-    display: flex; align-items: center; background: #FAF9F7; border: 1px solid #EDEDEB;
-    border-radius: 14px; padding: 18px; margin-bottom: 12px; cursor: pointer;
-  }
+  .modal-option { display: flex; align-items: center; background: #FAF9F7; border: 1px solid #EDEDEB; border-radius: 14px; padding: 18px; margin-bottom: 12px; cursor: pointer; }
   .modal-option:hover { background: #F0EFEC; }
   .modal-opt-label { font-size: 16px; font-weight: 600; color: #1A1A1A; margin-bottom: 4px; }
   .modal-opt-sub { font-size: 13px; color: #6B6B6B; line-height: 18px; }
-  .token-badge {
-    background: #FFF8E1; border-radius: 10px; padding: 6px 10px; margin-left: 12px; flex-shrink: 0;
-    font-size: 13px; font-weight: 600; color: #F57F17; white-space: nowrap;
-  }
+  .token-badge { background: #FFF8E1; border-radius: 10px; padding: 6px 10px; margin-left: 12px; flex-shrink: 0; font-size: 13px; font-weight: 600; color: #F57F17; white-space: nowrap; }
 
-  /* ─── Plan modal (full-screen page sheet) ─── */
-  .plan-overlay {
-    position: absolute; inset: 0; z-index: 30;
-    opacity: 0; pointer-events: none; transition: opacity .2s;
-    border-radius: 44px; overflow: hidden;
-  }
+  /* Plan modal */
+  .plan-overlay { position: absolute; inset: 0; z-index: 30; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; }
   .plan-overlay.open { opacity: 1; pointer-events: auto; }
-  .plan-modal {
-    position: absolute; bottom: 0; left: 0; right: 0; top: 40px;
-    background: #FAF9F7; border-radius: 20px 20px 0 0;
-    display: flex; flex-direction: column;
-    transform: translateY(100%); transition: transform .3s ease-out;
-  }
+  .plan-modal { position: absolute; bottom: 0; left: 0; right: 0; top: 40px; background: #FAF9F7; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; transform: translateY(100%); transition: transform .3s ease-out; }
   .plan-overlay.open .plan-modal { transform: translateY(0); }
   .plan-scroll { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 40px; }
   .plan-scroll::-webkit-scrollbar { display: none; }
@@ -132,82 +144,35 @@
   .plan-title { font-size: 28px; font-weight: 700; color: #1A1A1A; }
   .plan-cancel { font-size: 16px; color: #6B6B6B; font-weight: 500; cursor: pointer; background: none; border: none; }
   .plan-subtitle { font-size: 16px; color: #6B6B6B; margin-bottom: 24px; }
-
-  /* Plan goal cards */
   .plan-card { background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 18px; margin-bottom: 14px; }
-  .plan-input {
-    width: 100%; background: #F9F9F7; border: 1px solid #EDEDEB; border-radius: 10px;
-    padding: 14px; font-size: 15px; color: #1A1A1A; font-family: inherit; outline: none;
-  }
+  .plan-input { width: 100%; background: #F9F9F7; border: 1px solid #EDEDEB; border-radius: 10px; padding: 14px; font-size: 15px; color: #1A1A1A; font-family: inherit; outline: none; }
   .plan-input:focus { border-color: #C0C0C0; }
-  .friend-btn {
-    margin-top: 12px; width: 100%; padding: 10px; border-radius: 10px; background: #F5F5F0;
-    border: 1px solid #EDEDEB; font-size: 14px; font-weight: 600; color: #7A7A7A;
-    cursor: pointer; text-align: center;
-  }
+  .friend-btn { margin-top: 12px; width: 100%; padding: 10px; border-radius: 10px; background: #F5F5F0; border: 1px solid #EDEDEB; font-size: 14px; font-weight: 600; color: #7A7A7A; cursor: pointer; text-align: center; }
   .friend-btn:hover { background: #EEEDEA; }
-  .lock-in-btn {
-    display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 14px;
-    padding: 16px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 8px;
-  }
+  .lock-in-btn { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 8px; }
   .lock-in-btn:hover { background: #333; }
 
-  /* ─── Chat / Reflect screen ─── */
-  .chat-screen { display: none; flex-direction: column; flex: 1; }
-  .chat-header {
-    padding: 16px 24px 14px; border-bottom: 1px solid #EDEDEB; flex-shrink: 0;
-  }
-  .chat-header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-  .chat-heading { font-size: 28px; font-weight: 700; color: #1A1A1A; }
-  .chat-token-badge {
-    background: #FFF8E1; border-radius: 10px; padding: 5px 10px;
-    font-size: 13px; font-weight: 600; color: #F57F17;
-  }
-  .chat-subheading { font-size: 14px; color: #7A7A7A; line-height: 20px; }
-  .chat-body { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; overflow-y: auto; }
-  .chat-empty-icon {
-    width: 80px; height: 80px; border-radius: 40px; background: #F5F5F0;
-    display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
-  }
-  .chat-empty-icon svg { width: 48px; height: 48px; color: #C0C0C0; }
-  .chat-empty-title { font-size: 18px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
-  .chat-empty-desc { font-size: 15px; color: #7A7A7A; text-align: center; line-height: 22px; padding: 0 16px; margin-bottom: 24px; }
-  .chip-col { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-  .prompt-chip {
-    background: #fff; border: 1px solid #EDEDEB; border-radius: 12px;
-    padding: 12px 16px; text-align: center; cursor: pointer;
-    font-size: 14px; font-weight: 500; color: #1A1A1A;
-  }
-  .prompt-chip:hover { background: #F5F5F0; }
-  .chat-input-row {
-    display: flex; align-items: flex-end; gap: 10px; padding: 16px; padding-bottom: 24px;
-    border-top: 1px solid #EDEDEB; background: #FAF9F7; flex-shrink: 0;
-  }
-  .chat-input {
-    flex: 1; background: #fff; border: 1px solid #EDEDEB; border-radius: 14px;
-    padding: 14px; font-size: 15px; color: #1A1A1A; font-family: inherit; outline: none; resize: none;
-  }
-  .chat-input:focus { border-color: #C0C0C0; }
-  .chat-send-btn {
-    width: 44px; height: 44px; border-radius: 12px; background: #1A1A1A; border: none;
-    display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
-  }
-  .chat-send-btn:hover { background: #333; }
-  .chat-send-btn svg { width: 20px; height: 20px; color: #fff; }
-
-  /* Placeholder screens */
-  .placeholder-screen {
-    display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center;
-  }
+  /* Placeholder */
+  .placeholder-screen { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
   .placeholder-screen .p-title { font-size: 28px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
   .placeholder-screen .p-sub { font-size: 16px; color: #6B6B6B; }
+
+  /* Tab bar */
+  .tab-bar { display: flex; justify-content: space-around; align-items: flex-end; padding: 8px 0 28px; background: #FAF9F7; border-top: 1px solid #EDEDEB; flex-shrink: 0; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; user-select: none; flex: 1; }
+  .tab svg { width: 24px; height: 24px; }
+  .tab .label { font-size: 11px; font-weight: 500; }
+  .tab.active svg { color: #1A1A1A; }
+  .tab.active .label { color: #1A1A1A; font-weight: 700; }
+  .tab.inactive svg { color: #A0A0A0; }
+  .tab.inactive .label { color: #A0A0A0; }
+  .home-indicator { width: 134px; height: 5px; background: #1A1A1A; border-radius: 100px; margin: 8px auto 8px; flex-shrink: 0; }
 </style>
 </head>
 <body>
 
 <div class="phone">
   <div class="notch"></div>
-
   <div class="status-bar">
     <span>9:41</span>
     <div class="status-icons">
@@ -222,8 +187,6 @@
     <div class="screen-inner">
       <div class="greeting">Good evening</div>
       <div class="subtitle">Set 3 intentions for today</div>
-
-      <!-- Sleep quality -->
       <div class="sleep-card">
         <div class="sleep-label">How did you sleep?</div>
         <div class="sleep-row">
@@ -234,61 +197,67 @@
           <div class="sleep-option" onclick="pickSleep(this)"><span class="sleep-emoji">😁</span></div>
         </div>
       </div>
-
-      <!-- Goal 1: Hard -->
       <div class="goal-card">
-        <div class="goal-header">
-          <span class="goal-emoji">🔥</span>
-          <div style="flex:1"><div class="goal-label">Hard</div><div class="goal-hint">Push your limits</div></div>
-        </div>
+        <div class="goal-header"><span class="goal-emoji">🔥</span><div style="flex:1"><div class="goal-label">Hard</div><div class="goal-hint">Push your limits</div></div></div>
         <div class="goal-text">Ship the landing page redesign</div>
         <button class="stuck-btn" onclick="openStuck()">💡 I'm stuck</button>
       </div>
-
-      <!-- Goal 2: Routine -->
       <div class="goal-card">
-        <div class="goal-header">
-          <span class="goal-emoji">🔄</span>
-          <div style="flex:1"><div class="goal-label">Routine</div><div class="goal-hint">Build consistency</div></div>
-        </div>
+        <div class="goal-header"><span class="goal-emoji">🔄</span><div style="flex:1"><div class="goal-label">Routine</div><div class="goal-hint">Build consistency</div></div></div>
         <div class="goal-text">30 min morning run</div>
         <button class="stuck-btn" onclick="openStuck()">💡 I'm stuck</button>
       </div>
-
-      <!-- Goal 3: New -->
       <div class="goal-card">
-        <div class="goal-header">
-          <span class="goal-emoji">✨</span>
-          <div style="flex:1"><div class="goal-label">New</div><div class="goal-hint">Try something fresh</div></div>
-        </div>
-        <div class="goal-text">Read 20 pages of Designing Data-Intensive Applications</div>
+        <div class="goal-header"><span class="goal-emoji">✨</span><div style="flex:1"><div class="goal-label">New</div><div class="goal-hint">Try something fresh</div></div></div>
+        <div class="goal-text">Read 20 pages of DDIA</div>
         <button class="stuck-btn" onclick="openStuck()">💡 I'm stuck</button>
       </div>
-
-      <!-- Plan tomorrow CTA -->
       <button class="plan-cta" onclick="openPlan()">Plan tomorrow</button>
     </div>
   </div>
 
+  <!-- ═══ CALENDAR SCREEN ═══ -->
+  <div class="cal-screen" id="screen-calendar">
+    <div class="cal-topbar">
+      <div class="streak-badge" onclick="toggleStreaks()">
+        <span class="streak-text">↗ 12 days</span>
+        <div class="streak-dropdown" id="streakDD">
+          <div class="streak-dd-row">Total: 12 days</div>
+          <div class="streak-dd-row" style="color:#FF6B6B">🔥 Hard: 14 days</div>
+          <div class="streak-dd-row" style="color:#4ECDC4">🔄 Routine: 18 days</div>
+          <div class="streak-dd-row" style="color:#45B7D1">✨ New: 9 days</div>
+        </div>
+      </div>
+      <div class="cal-avatar">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>
+      </div>
+    </div>
+    <div class="month-nav">
+      <button class="month-arrow" onclick="changeMonth(-1)">‹</button>
+      <div class="month-label" id="monthLabel"></div>
+      <button class="month-arrow" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="week-hdr"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#34C759"></div><span class="cal-legend-label">All done</span></div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#FFBD2E"></div><span class="cal-legend-label">Partial</span></div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#C62828"></div><span class="cal-legend-label">Missed</span></div>
+    </div>
+  </div>
+
   <!-- Placeholder screens -->
-  <div class="placeholder-screen" id="screen-calendar"><div class="p-title">Calendar</div><div class="p-sub">Your goal tracking history</div></div>
   <div class="placeholder-screen" id="screen-stats"><div class="p-title">Stats</div><div class="p-sub">Your progress at a glance</div></div>
   <div class="placeholder-screen" id="screen-insights"><div class="p-title">Insights</div><div class="p-sub">Patterns and reflections</div></div>
+
   <!-- ═══ CHAT / REFLECT SCREEN ═══ -->
   <div class="chat-screen" id="screen-chat">
     <div class="chat-header">
-      <div class="chat-header-top">
-        <div class="chat-heading">Reflect</div>
-        <div class="chat-token-badge">🪙 87 tokens</div>
-      </div>
+      <div class="chat-header-top"><div class="chat-heading">Reflect</div><div class="chat-token-badge">🪙 87 tokens</div></div>
       <div class="chat-subheading">Talk through what's on your mind. Each message uses 1 token.</div>
     </div>
     <div class="chat-body">
-      <div class="chat-empty-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-        </svg>
-      </div>
+      <div class="chat-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
       <div class="chat-empty-title">Start a reflection</div>
       <div class="chat-empty-desc">Share what's blocking you, what you're avoiding, or what you're noticing about your patterns.</div>
       <div class="chip-col">
@@ -299,142 +268,175 @@
     </div>
     <div class="chat-input-row">
       <input class="chat-input" placeholder="What's on your mind..." />
-      <button class="chat-send-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
-        </svg>
-      </button>
+      <button class="chat-send-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
     </div>
   </div>
 
-  <!-- ═══ "I'M STUCK" BOTTOM SHEET ═══ -->
+  <!-- ═══ MODALS ═══ -->
   <div class="modal-overlay" id="stuckModal" onclick="closeStuck()">
     <div class="modal-sheet" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
       <div class="modal-title">Need help deciding?</div>
-      <div class="modal-option">
-        <div style="flex:1">
-          <div class="modal-opt-label">💡 Recommend 3 tasks</div>
-          <div class="modal-opt-sub">AI-powered suggestions based on your patterns</div>
-        </div>
-        <div class="token-badge">🪙 1 token</div>
-      </div>
-      <div class="modal-option">
-        <div style="flex:1">
-          <div class="modal-opt-label">👥 Phone a friend</div>
-          <div class="modal-opt-sub">Let someone help you choose</div>
-        </div>
+      <div class="modal-option"><div style="flex:1"><div class="modal-opt-label">💡 Recommend 3 tasks</div><div class="modal-opt-sub">AI-powered suggestions based on your patterns</div></div><div class="token-badge">🪙 1 token</div></div>
+      <div class="modal-option"><div style="flex:1"><div class="modal-opt-label">👥 Phone a friend</div><div class="modal-opt-sub">Let someone help you choose</div></div></div>
+    </div>
+  </div>
+
+  <div class="plan-overlay" id="planModal">
+    <div class="plan-modal">
+      <div class="plan-scroll">
+        <div class="plan-header"><div class="plan-title">Plan tomorrow</div><button class="plan-cancel" onclick="closePlan()">Cancel</button></div>
+        <div class="plan-subtitle">Set three intentional goals for tomorrow.</div>
+        <div class="plan-card"><div class="goal-header"><span class="goal-emoji">🔥</span><div style="flex:1"><div class="goal-label">Hard goal</div><div class="goal-hint">Push your limits</div></div></div><input class="plan-input" placeholder="What's the goal?" /><button class="friend-btn">Phone a Friend</button></div>
+        <div class="plan-card"><div class="goal-header"><span class="goal-emoji">🔄</span><div style="flex:1"><div class="goal-label">Routine goal</div><div class="goal-hint">Build consistency</div></div></div><input class="plan-input" placeholder="What's the goal?" /><button class="friend-btn">Phone a Friend</button></div>
+        <div class="plan-card"><div class="goal-header"><span class="goal-emoji">✨</span><div style="flex:1"><div class="goal-label">New goal</div><div class="goal-hint">Try something fresh</div></div></div><input class="plan-input" placeholder="What's the goal?" /><button class="friend-btn">Phone a Friend</button></div>
+        <button class="lock-in-btn" onclick="closePlan()">Lock in tomorrow</button>
       </div>
     </div>
   </div>
 
-  <!-- ═══ PLAN TOMORROW MODAL (page sheet) ═══ -->
-  <div class="plan-overlay" id="planModal">
-    <div class="plan-modal">
-      <div class="plan-scroll">
-        <div class="plan-header">
-          <div class="plan-title">Plan tomorrow</div>
-          <button class="plan-cancel" onclick="closePlan()">Cancel</button>
-        </div>
-        <div class="plan-subtitle">Set three intentional goals for tomorrow.</div>
-
-        <!-- Hard goal -->
-        <div class="plan-card">
-          <div class="goal-header">
-            <span class="goal-emoji">🔥</span>
-            <div style="flex:1"><div class="goal-label">Hard goal</div><div class="goal-hint">Push your limits</div></div>
-          </div>
-          <input class="plan-input" placeholder="What's the goal?" />
-          <button class="friend-btn">Phone a Friend</button>
-        </div>
-
-        <!-- Routine goal -->
-        <div class="plan-card">
-          <div class="goal-header">
-            <span class="goal-emoji">🔄</span>
-            <div style="flex:1"><div class="goal-label">Routine goal</div><div class="goal-hint">Build consistency</div></div>
-          </div>
-          <input class="plan-input" placeholder="What's the goal?" />
-          <button class="friend-btn">Phone a Friend</button>
-        </div>
-
-        <!-- New goal -->
-        <div class="plan-card">
-          <div class="goal-header">
-            <span class="goal-emoji">✨</span>
-            <div style="flex:1"><div class="goal-label">New goal</div><div class="goal-hint">Try something fresh</div></div>
-          </div>
-          <input class="plan-input" placeholder="What's the goal?" />
-          <button class="friend-btn">Phone a Friend</button>
-        </div>
-
-        <button class="lock-in-btn" onclick="closePlan()">Lock in tomorrow</button>
+  <!-- Calendar day detail sheet -->
+  <div class="cal-detail-overlay" id="calDetail" onclick="closeCalDetail()">
+    <div class="cal-detail-sheet" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      <div class="cal-detail-header">
+        <div class="cal-detail-date" id="calDetailDate"></div>
+        <button class="cal-detail-close" onclick="closeCalDetail()">✕</button>
       </div>
+      <div id="calDetailBody"></div>
     </div>
   </div>
 
   <!-- Tab bar -->
   <div class="tab-bar">
     <div class="tab inactive" data-screen="calendar" onclick="switchTab(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="14" width="3" height="3" rx="0.5"/><rect x="14" y="14" width="3" height="3" rx="0.5"/>
-      </svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="14" width="3" height="3" rx="0.5"/><rect x="14" y="14" width="3" height="3" rx="0.5"/></svg>
       <span class="label">Calendar</span>
     </div>
     <div class="tab inactive" data-screen="stats" onclick="switchTab(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="4" y="14" width="4" height="7" rx="1"/><rect x="10" y="9" width="4" height="12" rx="1"/><rect x="16" y="4" width="4" height="17" rx="1"/>
-      </svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="14" width="4" height="7" rx="1"/><rect x="10" y="9" width="4" height="12" rx="1"/><rect x="16" y="4" width="4" height="17" rx="1"/></svg>
       <span class="label">Stats</span>
     </div>
     <div class="tab active" data-screen="today" onclick="switchTab(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>
-      </svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
       <span class="label">Today</span>
     </div>
     <div class="tab inactive" data-screen="insights" onclick="switchTab(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 21h6"/><path d="M10 17h4"/><path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/>
-      </svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21h6"/><path d="M10 17h4"/><path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/></svg>
       <span class="label">Insights</span>
     </div>
     <div class="tab inactive" data-screen="chat" onclick="switchTab(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-      </svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
       <span class="label">Chat</span>
     </div>
   </div>
-
   <div class="home-indicator"></div>
 </div>
 
 <script>
-function pickSleep(el) {
-  document.querySelectorAll('.sleep-option').forEach(o => o.classList.remove('active'));
-  el.classList.add('active');
-}
-
-/* "I'm stuck" sheet */
+/* ── Shared ── */
+function pickSleep(el) { document.querySelectorAll('.sleep-option').forEach(o => o.classList.remove('active')); el.classList.add('active'); }
 function openStuck() { document.getElementById('stuckModal').classList.add('open'); }
 function closeStuck() { document.getElementById('stuckModal').classList.remove('open'); }
-
-/* Plan modal */
 function openPlan() { document.getElementById('planModal').classList.add('open'); }
 function closePlan() { document.getElementById('planModal').classList.remove('open'); }
 
-/* Tab switching */
 function switchTab(el) {
   document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active'); t.classList.add('inactive'); });
   el.classList.remove('inactive'); el.classList.add('active');
-  const screens = ['today','calendar','stats','insights','chat'];
-  screens.forEach(s => { document.getElementById('screen-' + s).style.display = 'none'; });
-  const target = el.dataset.screen;
-  const node = document.getElementById('screen-' + target);
-  node.style.display = (target === 'today') ? '' : 'flex';
+  ['today','calendar','stats','insights','chat'].forEach(s => { document.getElementById('screen-' + s).style.display = 'none'; });
+  const t = el.dataset.screen;
+  document.getElementById('screen-' + t).style.display = (t === 'today') ? '' : 'flex';
 }
+
+/* ── Calendar logic ── */
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+let calYear, calMonth;
+const now = new Date();
+calYear = now.getFullYear();
+calMonth = now.getMonth();
+const todayStr = now.toISOString().split('T')[0];
+
+// Sample history data for demo
+const sampleHistory = {};
+(function seedData() {
+  const statuses = ['all','partial','missed'];
+  const goals = [
+    { hard: 'Ship redesign', routine: '30 min run', new: 'Read 20 pages' },
+    { hard: 'Deploy API v2', routine: 'Meditate 15 min', new: 'Try watercolors' },
+    { hard: 'Finish pitch deck', routine: 'Journal 10 min', new: 'Cook new recipe' },
+  ];
+  for (let i = 1; i <= 28; i++) {
+    const d = new Date(calYear, calMonth, i);
+    if (d > now) break;
+    const ds = d.toISOString().split('T')[0];
+    const r = Math.random();
+    const si = r < .45 ? 0 : r < .75 ? 1 : 2;
+    const g = goals[i % 3];
+    sampleHistory[ds] = {
+      status: statuses[si],
+      hard: g.hard, routine: g.routine, new: g.new,
+      hardDone: si === 0 || Math.random() > .4,
+      routineDone: si === 0 || Math.random() > .5,
+      newDone: si === 0 ? true : si === 1 ? Math.random() > .5 : false,
+    };
+  }
+})();
+
+function renderCalendar() {
+  document.getElementById('monthLabel').textContent = MONTHS[calMonth] + ' ' + calYear;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  for (let i = 0; i < firstDay; i++) { const c = document.createElement('div'); c.className = 'cal-cell'; c.innerHTML = '<div class="cal-day empty"></div>'; grid.appendChild(c); }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const entry = sampleHistory[ds];
+    const isFuture = ds > todayStr;
+    const isToday = ds === todayStr;
+    let cls = 'none';
+    if (entry) cls = entry.status;
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell';
+    const dayEl = document.createElement('div');
+    dayEl.className = 'cal-day ' + cls + (isFuture ? ' future' : '') + (isToday ? ' today' : '');
+    dayEl.textContent = d;
+    if (!isFuture && entry) dayEl.onclick = () => openCalDetail(ds, entry);
+    cell.appendChild(dayEl);
+    grid.appendChild(cell);
+  }
+  const total = firstDay + daysInMonth;
+  for (let i = total; i % 7 !== 0; i++) { const c = document.createElement('div'); c.className = 'cal-cell'; c.innerHTML = '<div class="cal-day empty"></div>'; grid.appendChild(c); }
+}
+renderCalendar();
+
+function changeMonth(dir) { calMonth += dir; if (calMonth < 0) { calMonth = 11; calYear--; } if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
+
+function toggleStreaks() { document.getElementById('streakDD').classList.toggle('show'); }
+
+function openCalDetail(ds, entry) {
+  const d = new Date(ds + 'T12:00:00');
+  document.getElementById('calDetailDate').textContent = DAYS_FULL[d.getDay()] + ', ' + MONTHS_SHORT[d.getMonth()] + ' ' + d.getDate();
+  const body = document.getElementById('calDetailBody');
+  body.innerHTML = '';
+  [{label:'HARD', color:'#FF6B6B', goal: entry.hard, done: entry.hardDone},
+   {label:'ROUTINE', color:'#4ECDC4', goal: entry.routine, done: entry.routineDone},
+   {label:'NEW', color:'#45B7D1', goal: entry.new, done: entry.newDone}].forEach(g => {
+    body.innerHTML += `<div class="cal-goal-row">
+      <div class="cal-goal-hdr">
+        <span class="cal-goal-type" style="color:${g.color}">${g.label}</span>
+        <span class="cal-goal-status" style="color:${g.done ? '#2E7D32' : '#A0A0A0'}">${g.done ? 'Done' : 'Missed'}</span>
+      </div>
+      <div class="cal-goal-text ${g.done ? '' : 'dimmed'}">${g.goal}</div>
+    </div>`;
+  });
+  document.getElementById('calDetail').classList.add('open');
+}
+function closeCalDetail() { document.getElementById('calDetail').classList.remove('open'); }
 </script>
 
 </body>
