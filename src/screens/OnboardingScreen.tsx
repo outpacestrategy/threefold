@@ -9,7 +9,9 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   Platform,
+  Modal,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { UserProfile, IdentityType, AiTone, FocusArea, TomorrowEntry } from '../types';
 import { saveUserProfile, saveTomorrowEntry, getTomorrowDate } from '../lib/storage';
@@ -54,6 +56,26 @@ export default function OnboardingScreen({ onComplete }: Props) {
   const [hardGoal, setHardGoal] = useState('');
   const [routineGoal, setRoutineGoal] = useState('');
   const [newGoal, setNewGoal] = useState('');
+  const [aiModalVisible, setAiModalVisible] = useState(false);
+  const [aiModalPrompt, setAiModalPrompt] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const AI_PROMPTS: Record<string, string> = {
+    identity: `I am [your job or situation]. I want to build better habits because [your reason]. Consistency matters to me because [why it matters right now]. Write this as a short 1-2 sentence personal statement for a goal-tracking app.`,
+    name: `I'm setting up a goal-tracking app and need to decide how I want to be addressed. My name is [your name]. Should I use my full name, a nickname, or something else? Just give me a short suggestion.`,
+    whyConsistency: `Write an honest 1-2 sentence answer to this question: Why does staying consistent with my daily goals matter to me right now? I am [your situation/job/life stage].`,
+  };
+
+  const openAiModal = (promptKey: string) => {
+    setAiModalPrompt(AI_PROMPTS[promptKey]);
+    setCopied(false);
+    setAiModalVisible(true);
+  };
+
+  const handleCopyPrompt = async () => {
+    await Clipboard.setStringAsync(aiModalPrompt);
+    setCopied(true);
+  };
 
   const toggleFocus = (area: FocusArea) => {
     setFocusAreas((prev) => {
@@ -145,6 +167,9 @@ export default function OnboardingScreen({ onComplete }: Props) {
               returnKeyType="done"
               onSubmitEditing={Keyboard.dismiss}
             />
+            <TouchableOpacity onPress={() => openAiModal('name')}>
+              <Text style={styles.askAiLink}>Not sure what to say? Ask AI →</Text>
+            </TouchableOpacity>
 
             <Text style={[styles.label, { marginTop: 24 }]}>I identify as a...</Text>
             <View style={styles.chipRow}>
@@ -183,6 +208,9 @@ export default function OnboardingScreen({ onComplete }: Props) {
               returnKeyType="done"
               onSubmitEditing={Keyboard.dismiss}
             />
+            <TouchableOpacity onPress={() => openAiModal('identity')}>
+              <Text style={styles.askAiLink}>Not sure what to say? Ask AI →</Text>
+            </TouchableOpacity>
           </View>
         );
 
@@ -334,6 +362,34 @@ export default function OnboardingScreen({ onComplete }: Props) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={aiModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAiModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Copy this into ChatGPT or Claude</Text>
+            <View style={styles.modalPromptBox}>
+              <Text style={styles.modalPromptText}>{aiModalPrompt}</Text>
+            </View>
+            <TouchableOpacity style={styles.copyButton} onPress={handleCopyPrompt}>
+              <Text style={styles.copyButtonText}>{copied ? 'Copied!' : 'Copy Prompt'}</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalInstruction}>
+              Paste this into any AI, then paste the response back here
+            </Text>
+            <TouchableOpacity
+              style={styles.dismissButton}
+              onPress={() => setAiModalVisible(false)}
+            >
+              <Text style={styles.dismissButtonText}>Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -524,5 +580,72 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  askAiLink: {
+    fontSize: 13,
+    color: '#7A7A7A',
+    marginTop: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: '#FAF9F7',
+    borderRadius: 20,
+    padding: 28,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalPromptBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EDEDEB',
+    padding: 16,
+    marginBottom: 16,
+  },
+  modalPromptText: {
+    fontSize: 14,
+    color: '#1A1A1A',
+    lineHeight: 21,
+  },
+  copyButton: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  copyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalInstruction: {
+    fontSize: 13,
+    color: '#A0A0A0',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  dismissButton: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  dismissButtonText: {
+    fontSize: 15,
+    color: '#7A7A7A',
+    fontWeight: '500',
   },
 });
