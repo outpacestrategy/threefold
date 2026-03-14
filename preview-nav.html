@@ -3,306 +3,189 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Threefold — App Preview</title>
+<title>Threefold</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #E8E6E1; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif; }
+  body { background: #E8E6E1; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif; -webkit-font-smoothing: antialiased; }
 
   .phone {
-    width: 375px; height: 812px; background: #FAF9F7; border-radius: 44px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.05);
+    width: 375px; height: 812px; background: #FAFAF9; border-radius: 44px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.15);
     display: flex; flex-direction: column; overflow: hidden; position: relative;
   }
-  .notch { width: 126px; height: 34px; background: #1A1A1A; border-radius: 0 0 20px 20px; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10; }
+  .notch { width: 126px; height: 34px; background: #000; border-radius: 0 0 20px 20px; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10; }
   .status-bar { height: 54px; padding: 14px 28px 0; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 600; color: #1A1A1A; flex-shrink: 0; }
   .status-icons { display: flex; gap: 5px; align-items: center; }
   .status-icons svg { width: 16px; height: 16px; }
 
-  /* Shared scrollable screen */
-  .screen-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; }
-  .screen-content::-webkit-scrollbar { display: none; }
-  .screen-inner { padding: 24px; padding-bottom: 20px; }
+  /* ─── Shared ─── */
+  .screen { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; }
+  .screen::-webkit-scrollbar { display: none; }
+  .screen-flex { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+  .pad { padding: 20px 24px 24px; }
+
+  /* Top bar — shared across all screens */
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 24px 6px; flex-shrink: 0; }
+  .streak { background: #E8F5F0; border-radius: 20px; padding: 5px 12px; cursor: pointer; position: relative; font-size: 13px; font-weight: 600; color: #2B9B7A; letter-spacing: -.2px; }
+  .streak-dd { display: none; position: absolute; top: 36px; left: 0; background: #fff; border-radius: 12px; padding: 12px 14px; width: 180px; z-index: 5; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+  .streak-dd.show { display: block; }
+  .streak-dd div { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; }
+  .streak-dd div:last-child { margin-bottom: 0; }
+  .avatar { width: 32px; height: 32px; border-radius: 16px; background: #EFEFEC; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .avatar svg { width: 16px; height: 16px; color: #999; }
+  .token-pill { background: #F5F0E0; border-radius: 16px; padding: 4px 10px; font-size: 12px; font-weight: 600; color: #B8860B; cursor: pointer; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; }
 
   /* ─── TODAY ─── */
-  .greeting { font-size: 28px; font-weight: 700; color: #1A1A1A; margin-bottom: 4px; }
-  .subtitle { font-size: 16px; color: #6B6B6B; margin-bottom: 24px; }
-  .sleep-card { background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 20px; margin-bottom: 20px; }
-  .sleep-label { font-size: 15px; font-weight: 600; color: #1A1A1A; margin-bottom: 14px; }
-  .sleep-row { display: flex; justify-content: space-between; }
-  .sleep-option { width: 52px; height: 52px; border-radius: 14px; background: #F5F5F0; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid transparent; transition: all .15s; }
-  .sleep-option:hover { background: #EEEDEA; }
-  .sleep-option.active { background: #E8E6E1; border-color: #1A1A1A; }
-  .sleep-emoji { font-size: 24px; line-height: 1; }
-  .goal-card { background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 18px; margin-bottom: 12px; }
-  .goal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .goal-emoji { font-size: 20px; line-height: 1; flex-shrink: 0; }
-  .goal-label { font-size: 15px; font-weight: 600; color: #1A1A1A; }
-  .goal-hint { font-size: 12px; color: #A0A0A0; margin-top: 1px; }
-  .goal-text { font-size: 16px; color: #1A1A1A; line-height: 22px; padding-left: 30px; margin-bottom: 10px; }
-  .stuck-btn { font-size: 14px; color: #6B6B6B; font-weight: 500; cursor: pointer; background: none; border: none; padding: 0; margin-left: 30px; }
-  .stuck-btn:hover { color: #1A1A1A; }
-  .plan-cta { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 8px; }
-  .plan-cta:hover { background: #333; }
+  .greeting { font-size: 26px; font-weight: 700; color: #1A1A1A; letter-spacing: -.3px; }
+  .sleep-row { display: flex; gap: 8px; margin: 12px 0 24px; }
+  .sleep-dot { font-size: 18px; cursor: pointer; opacity: .35; transition: all .15s; }
+  .sleep-dot.on { opacity: 1; transform: scale(1.15); }
+  .goal { background: #fff; border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; position: relative; overflow: hidden; }
+  .goal::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 4px 0 0 4px; }
+  .goal.hard::before { background: #E8584A; }
+  .goal.routine::before { background: #3DBBAA; }
+  .goal.new::before { background: #4A9FD9; }
+  .goal-type { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
+  .goal-body { font-size: 15px; font-weight: 500; color: #1A1A1A; line-height: 21px; }
+  .goal-note-btn { font-size: 12px; color: #BBB; cursor: pointer; background: none; border: none; padding: 0; margin-top: 8px; font-weight: 500; }
+  .goal-note-btn:hover { color: #888; }
+  .goal-note { display: none; margin-top: 8px; background: #FAFAF9; border: 1px solid #F0EFEC; border-radius: 8px; padding: 10px; font-size: 13px; color: #1A1A1A; font-family: inherit; outline: none; resize: none; min-height: 48px; width: 100%; }
+  .goal-note.show { display: block; }
+  .plan-btn { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 12px; letter-spacing: -.2px; }
+  .plan-btn:hover { background: #2A2A2A; }
 
   /* ─── CALENDAR ─── */
-  .cal-screen { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
-  .cal-topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px 8px; flex-shrink: 0; }
-  .streak-badge { background: #E6F7F1; border-radius: 20px; padding: 7px 14px; cursor: pointer; position: relative; }
-  .streak-text { font-size: 14px; font-weight: 600; color: #2AA87E; }
-  .streak-dropdown { display: none; position: absolute; top: 40px; left: 0; background: #fff; border: 1px solid #EDEDEB; border-radius: 12px; padding: 14px; width: 200px; z-index: 5; box-shadow: 0 4px 16px rgba(0,0,0,.1); }
-  .streak-dropdown.show { display: block; }
-  .streak-dd-row { font-size: 14px; font-weight: 600; color: #1A1A1A; margin-bottom: 6px; }
-  .streak-dd-row:last-child { margin-bottom: 0; }
-  .cal-avatar { width: 36px; height: 36px; border-radius: 18px; background: #F0F0EC; display: flex; align-items: center; justify-content: center; }
-  .cal-avatar svg { width: 18px; height: 18px; color: #7A7A7A; }
-  .month-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; flex-shrink: 0; }
-  .month-label { font-size: 20px; font-weight: 700; color: #1A1A1A; }
-  .month-arrow { background: none; border: none; cursor: pointer; font-size: 20px; color: #1A1A1A; padding: 4px 8px; }
-  .week-hdr { display: flex; padding: 0 16px; margin-bottom: 6px; flex-shrink: 0; }
-  .week-hdr span { flex: 1; text-align: center; font-size: 12px; font-weight: 600; color: #A0A0A0; }
+  .month-nav { display: flex; justify-content: space-between; align-items: center; padding: 8px 24px 10px; flex-shrink: 0; }
+  .month-label { font-size: 18px; font-weight: 700; color: #1A1A1A; letter-spacing: -.2px; }
+  .month-arrow { background: none; border: none; cursor: pointer; font-size: 18px; color: #1A1A1A; padding: 4px 8px; }
+  .week-hdr { display: flex; padding: 0 16px; margin-bottom: 4px; flex-shrink: 0; }
+  .week-hdr span { flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: #BBB; text-transform: uppercase; }
   .cal-grid { display: flex; flex-wrap: wrap; padding: 0 16px; flex-shrink: 0; }
-  .cal-cell { width: calc(100% / 7); aspect-ratio: 1; padding: 3px; }
-  .cal-day { width: 100%; height: 100%; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+  .cal-cell { width: calc(100% / 7); aspect-ratio: 1; padding: 2.5px; }
+  .cal-day { width: 100%; height: 100%; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
   .cal-day.empty { cursor: default; }
-  .cal-day.none { background: #F0F0EC; color: #1A1A1A; }
-  .cal-day.all { background: #34C759; color: #fff; }
-  .cal-day.partial { background: #FFBD2E; color: #fff; }
-  .cal-day.missed { background: #C62828; color: #fff; }
-  .cal-day.future { opacity: .4; cursor: default; }
-  .cal-day.today { outline: 2px solid #1A1A1A; outline-offset: -2px; }
-  .cal-legend { display: flex; justify-content: center; gap: 20px; padding: 16px 0; flex-shrink: 0; }
-  .cal-legend-item { display: flex; align-items: center; gap: 6px; }
-  .cal-legend-dot { width: 10px; height: 10px; border-radius: 5px; }
-  .cal-legend-label { font-size: 12px; color: #7A7A7A; font-weight: 500; }
-
-  /* Calendar day detail sheet */
-  .cal-detail-overlay {
-    position: absolute; inset: 0; background: rgba(0,0,0,.35);
-    display: flex; align-items: flex-end; z-index: 25;
-    opacity: 0; pointer-events: none; transition: opacity .2s;
-    border-radius: 44px; overflow: hidden;
-  }
-  .cal-detail-overlay.open { opacity: 1; pointer-events: auto; }
-  .cal-detail-sheet {
-    background: #fff; border-radius: 20px 20px 0 0; padding: 24px; padding-bottom: 40px; width: 100%;
-    transform: translateY(100%); transition: transform .25s ease-out;
-  }
-  .cal-detail-overlay.open .cal-detail-sheet { transform: translateY(0); }
-  .cal-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .cal-detail-date { font-size: 20px; font-weight: 700; color: #1A1A1A; }
-  .cal-detail-close { background: none; border: none; cursor: pointer; font-size: 22px; color: #7A7A7A; }
-  .cal-goal-row { background: #FAF9F7; border: 1px solid #EDEDEB; border-radius: 12px; padding: 16px; margin-bottom: 10px; }
-  .cal-goal-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .cal-goal-type { font-size: 12px; font-weight: 700; letter-spacing: .5px; }
-  .cal-goal-status { font-size: 12px; font-weight: 600; }
-  .cal-goal-text { font-size: 15px; color: #1A1A1A; line-height: 22px; }
-  .cal-goal-text.dimmed { color: #A0A0A0; }
-
-  /* ─── CHAT / REFLECT ─── */
-  .chat-screen { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
-  .chat-header { padding: 16px 24px 14px; border-bottom: 1px solid #EDEDEB; flex-shrink: 0; }
-  .chat-header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-  .chat-heading { font-size: 28px; font-weight: 700; color: #1A1A1A; }
-  .chat-token-badge { background: #FFF8E1; border-radius: 10px; padding: 5px 10px; font-size: 13px; font-weight: 600; color: #F57F17; }
-  .chat-subheading { font-size: 14px; color: #7A7A7A; line-height: 20px; }
-  .chat-body { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; overflow-y: auto; }
-  .chat-empty-icon { width: 80px; height: 80px; border-radius: 40px; background: #F5F5F0; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
-  .chat-empty-icon svg { width: 48px; height: 48px; color: #C0C0C0; }
-  .chat-empty-title { font-size: 18px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
-  .chat-empty-desc { font-size: 15px; color: #7A7A7A; text-align: center; line-height: 22px; padding: 0 16px; margin-bottom: 24px; }
-  .chip-col { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-  .prompt-chip { background: #fff; border: 1px solid #EDEDEB; border-radius: 12px; padding: 12px 16px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 500; color: #1A1A1A; }
-  .prompt-chip:hover { background: #F5F5F0; }
-  .chat-input-row { display: flex; align-items: flex-end; gap: 10px; padding: 16px; padding-bottom: 24px; border-top: 1px solid #EDEDEB; background: #FAF9F7; flex-shrink: 0; }
-  .chat-input { flex: 1; background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 14px; font-size: 15px; color: #1A1A1A; font-family: inherit; outline: none; resize: none; }
-  .chat-input:focus { border-color: #C0C0C0; }
-  .chat-send-btn { width: 44px; height: 44px; border-radius: 12px; background: #1A1A1A; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-  .chat-send-btn:hover { background: #333; }
-  .chat-send-btn svg { width: 20px; height: 20px; color: #fff; }
-
-  /* ─── Shared modals ─── */
-  .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; z-index: 20; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; }
-  .modal-overlay.open { opacity: 1; pointer-events: auto; }
-  .modal-sheet { background: #fff; border-radius: 20px 20px 0 0; padding: 24px; padding-bottom: 40px; width: 100%; transform: translateY(100%); transition: transform .25s ease-out; }
-  .modal-overlay.open .modal-sheet { transform: translateY(0); }
-  .modal-handle { width: 40px; height: 4px; border-radius: 2px; background: #D1D1D6; margin: 0 auto 20px; }
-  .modal-title { font-size: 20px; font-weight: 700; color: #1A1A1A; margin-bottom: 20px; }
-  .modal-option { display: flex; align-items: center; background: #FAF9F7; border: 1px solid #EDEDEB; border-radius: 14px; padding: 18px; margin-bottom: 12px; cursor: pointer; }
-  .modal-option:hover { background: #F0EFEC; }
-  .modal-opt-label { font-size: 16px; font-weight: 600; color: #1A1A1A; margin-bottom: 4px; }
-  .modal-opt-sub { font-size: 13px; color: #6B6B6B; line-height: 18px; }
-  .token-badge { background: #FFF8E1; border-radius: 10px; padding: 6px 10px; margin-left: 12px; flex-shrink: 0; font-size: 13px; font-weight: 600; color: #F57F17; white-space: nowrap; }
-
-  /* Plan modal */
-  .plan-overlay { position: absolute; inset: 0; z-index: 30; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; }
-  .plan-overlay.open { opacity: 1; pointer-events: auto; }
-  .plan-modal { position: absolute; bottom: 0; left: 0; right: 0; top: 40px; background: #FAF9F7; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; transform: translateY(100%); transition: transform .3s ease-out; }
-  .plan-overlay.open .plan-modal { transform: translateY(0); }
-  .plan-scroll { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 40px; }
-  .plan-scroll::-webkit-scrollbar { display: none; }
-  .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-  .plan-title { font-size: 28px; font-weight: 700; color: #1A1A1A; }
-  .plan-cancel { font-size: 16px; color: #6B6B6B; font-weight: 500; cursor: pointer; background: none; border: none; }
-  .plan-subtitle { font-size: 16px; color: #6B6B6B; margin-bottom: 24px; }
-  .plan-card { background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 18px; margin-bottom: 14px; }
-  .plan-input { width: 100%; background: #F9F9F7; border: 1px solid #EDEDEB; border-radius: 10px; padding: 14px; font-size: 15px; color: #1A1A1A; font-family: inherit; outline: none; }
-  .plan-input:focus { border-color: #C0C0C0; }
-  .friend-btn { margin-top: 12px; width: 100%; padding: 10px; border-radius: 10px; background: #F5F5F0; border: 1px solid #EDEDEB; font-size: 14px; font-weight: 600; color: #7A7A7A; cursor: pointer; text-align: center; }
-  .friend-btn:hover { background: #EEEDEA; }
-  .lock-in-btn { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 8px; }
-  .lock-in-btn:hover { background: #333; }
+  .cal-day.none { background: #F0EFEC; color: #999; }
+  .cal-day.all { background: #3DBBAA; color: #fff; }
+  .cal-day.partial { background: #E8C84A; color: #fff; }
+  .cal-day.missed { background: #D4574A; color: #fff; }
+  .cal-day.future { opacity: .3; cursor: default; }
+  .cal-day.today { box-shadow: inset 0 0 0 2px #1A1A1A; }
+  .cal-legend { display: flex; justify-content: center; gap: 16px; padding: 12px 0; flex-shrink: 0; }
+  .cal-legend-item { display: flex; align-items: center; gap: 5px; }
+  .cal-legend-dot { width: 8px; height: 8px; border-radius: 4px; }
+  .cal-legend-label { font-size: 11px; color: #999; font-weight: 500; }
 
   /* ─── STATS ─── */
-  .stats-screen { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
-  .stats-topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px 12px; border-bottom: 1px solid #EDEDEB; flex-shrink: 0; }
-  .stats-heading { font-size: 28px; font-weight: 700; color: #1A1A1A; }
-  .stats-right { display: flex; align-items: center; gap: 8px; }
-  .stats-help { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-  .stats-help svg { width: 24px; height: 24px; color: #A0A0A0; }
-  .stats-token-pill { background: #FFF8E1; border-radius: 20px; padding: 6px 12px; font-size: 13px; font-weight: 600; color: #F57F17; cursor: pointer; }
-  .stats-scroll { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 40px; min-height: 0; }
+  .stats-scroll { flex: 1; overflow-y: auto; padding: 20px 24px 40px; min-height: 0; }
   .stats-scroll::-webkit-scrollbar { display: none; }
-  .stats-section-label { font-size: 12px; font-weight: 700; color: #A0A0A0; letter-spacing: 1px; margin-bottom: 12px; margin-top: 8px; }
-  .stats-card { background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 18px; margin-bottom: 14px; }
-  .stats-card-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .stats-card-title { font-size: 17px; font-weight: 700; color: #1A1A1A; }
-  .stats-active-badge { background: #FFF3E0; border-radius: 10px; padding: 4px 10px; font-size: 12px; font-weight: 600; color: #E65100; }
-  .stats-card-body { font-size: 15px; color: #555; line-height: 22px; margin-bottom: 12px; }
-  .stats-dive { font-size: 14px; font-weight: 600; color: #F57F17; cursor: pointer; background: none; border: none; padding: 0; }
-  .stats-dive:hover { text-decoration: underline; }
-  .stats-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-  .stats-tag { border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
-  .stats-tag.done { background: #E8F5E9; color: #2E7D32; }
-  .stats-tag.missed { background: #FFEBEE; color: #C62828; }
-
-  /* Dive deeper modal */
-  .dive-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 25; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; padding: 32px; }
-  .dive-overlay.open { opacity: 1; pointer-events: auto; }
-  .dive-card { background: #fff; border-radius: 20px; padding: 24px; width: 100%; }
-  .dive-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-  .dive-title { font-size: 22px; font-weight: 700; color: #1A1A1A; }
-  .dive-close { background: none; border: none; font-size: 22px; color: #7A7A7A; cursor: pointer; }
-  .dive-subtitle { font-size: 15px; color: #6B6B6B; margin-bottom: 12px; }
-  .dive-tokens { font-size: 14px; font-weight: 600; color: #F57F17; margin-bottom: 12px; }
-  .dive-body { font-size: 15px; color: #555; line-height: 22px; margin-bottom: 20px; }
-  .dive-cta { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; }
-  .dive-cta:hover { background: #333; }
+  .section-label { font-size: 11px; font-weight: 700; color: #BBB; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; margin-top: 4px; }
+  .card { background: #fff; border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; }
+  .card-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .card-title { font-size: 15px; font-weight: 700; color: #1A1A1A; letter-spacing: -.1px; }
+  .card-badge { font-size: 11px; font-weight: 600; color: #D97706; background: #FFF7E0; border-radius: 8px; padding: 2px 8px; }
+  .card-body { font-size: 14px; color: #777; line-height: 20px; margin-bottom: 10px; }
+  .card-link { font-size: 13px; font-weight: 600; color: #B8860B; cursor: pointer; background: none; border: none; padding: 0; }
+  .card-link:hover { text-decoration: underline; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tag { border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; }
+  .tag.done { background: #E8F5EE; color: #2B7A4B; }
+  .tag.miss { background: #FEECEB; color: #C44040; }
 
   /* ─── INSIGHTS ─── */
-  .insights-screen { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
-  .insights-header { padding: 16px 24px 14px; border-bottom: 1px solid #EDEDEB; flex-shrink: 0; }
-  .insights-heading { font-size: 28px; font-weight: 700; color: #1A1A1A; margin-bottom: 4px; }
-  .insights-subheading { font-size: 14px; color: #7A7A7A; line-height: 20px; }
-  .insights-toggle { display: flex; background: #F0F0EC; border-radius: 12px; margin: 16px 24px 8px; padding: 4px; flex-shrink: 0; }
-  .insights-tog-opt { flex: 1; text-align: center; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; color: #A0A0A0; cursor: pointer; transition: all .15s; }
-  .insights-tog-opt.active { background: #fff; color: #1A1A1A; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-  .insights-scroll { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 40px; min-height: 0; }
-  .insights-scroll::-webkit-scrollbar { display: none; }
-  .insights-card { background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 20px; margin-bottom: 14px; }
-  .insights-card-label { font-size: 13px; font-weight: 600; color: #A0A0A0; margin-bottom: 6px; }
-  .insights-card-rate { font-size: 22px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
-  .insights-card-narrative { font-size: 15px; color: #555; line-height: 22px; margin-bottom: 14px; }
-  .insights-rate-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-  .insights-rate-pill { background: #F5F5F0; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; }
-  .insights-card-meta { font-size: 12px; color: #A0A0A0; font-weight: 500; }
+  .insights-hdr { padding: 4px 24px 12px; flex-shrink: 0; }
+  .insights-title { font-size: 22px; font-weight: 700; color: #1A1A1A; letter-spacing: -.2px; }
+  .insights-sub { font-size: 13px; color: #999; margin-top: 2px; }
+  .toggle-bar { display: flex; background: #F0EFEC; border-radius: 10px; margin: 0 24px 8px; padding: 3px; flex-shrink: 0; }
+  .toggle-opt { flex: 1; text-align: center; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #999; cursor: pointer; transition: all .15s; }
+  .toggle-opt.on { background: #fff; color: #1A1A1A; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .i-scroll { flex: 1; overflow-y: auto; padding: 16px 24px 40px; min-height: 0; }
+  .i-scroll::-webkit-scrollbar { display: none; }
+  .i-card { background: #fff; border-radius: 14px; padding: 18px; margin-bottom: 10px; }
+  .i-label { font-size: 12px; font-weight: 600; color: #BBB; margin-bottom: 4px; }
+  .i-rate { font-size: 20px; font-weight: 700; color: #1A1A1A; margin-bottom: 6px; letter-spacing: -.2px; }
+  .i-narrative { font-size: 14px; color: #777; line-height: 20px; margin-bottom: 10px; }
+  .i-pills { display: flex; gap: 6px; margin-bottom: 8px; }
+  .i-pill { background: #F5F4F0; border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; }
+  .i-meta { font-size: 11px; color: #BBB; }
 
-  /* ─── TOKEN PURCHASE MODAL ─── */
-  .purchase-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 40; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; padding: 24px; }
-  .purchase-overlay.open { opacity: 1; pointer-events: auto; }
-  .purchase-card { background: #fff; border-radius: 20px; padding: 24px; width: 100%; }
-  .purchase-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .purchase-title { font-size: 22px; font-weight: 700; color: #1A1A1A; }
-  .purchase-close { background: none; border: none; font-size: 22px; color: #7A7A7A; cursor: pointer; }
-  .purchase-balance { display: flex; justify-content: space-between; align-items: center; background: #FFF8E1; border-radius: 12px; padding: 14px; margin-bottom: 16px; }
-  .purchase-bal-label { font-size: 14px; font-weight: 600; color: #1A1A1A; }
-  .purchase-bal-value { font-size: 16px; font-weight: 700; color: #F57F17; }
-  .purchase-body { font-size: 15px; color: #555; line-height: 22px; margin-bottom: 8px; }
-  .purchase-free { font-size: 13px; color: #2AA87E; font-weight: 500; margin-bottom: 20px; }
-  .purchase-tier { display: flex; align-items: center; background: #FAF9F7; border: 1px solid #EDEDEB; border-radius: 14px; padding: 16px; margin-bottom: 10px; cursor: pointer; }
-  .purchase-tier:hover { background: #F0EFEC; }
-  .purchase-tier-title { display: flex; align-items: center; gap: 8px; }
-  .purchase-tier-tokens { font-size: 16px; font-weight: 700; color: #1A1A1A; }
-  .purchase-best { background: #E6F7F1; border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 700; color: #2AA87E; letter-spacing: .5px; }
-  .purchase-tier-per { font-size: 12px; color: #A0A0A0; margin-top: 2px; }
-  .purchase-tier-price { font-size: 18px; font-weight: 700; color: #1A1A1A; margin-left: auto; }
-  .purchase-footer { font-size: 12px; color: #A0A0A0; text-align: center; margin-top: 8px; }
+  /* ─── CHAT / REFLECT ─── */
+  .chat-hdr { padding: 4px 24px 12px; border-bottom: 1px solid #F0EFEC; flex-shrink: 0; }
+  .chat-hdr-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+  .chat-title { font-size: 22px; font-weight: 700; color: #1A1A1A; letter-spacing: -.2px; }
+  .chat-sub { font-size: 13px; color: #999; }
+  .chat-body { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; overflow-y: auto; }
+  .chat-icon { width: 64px; height: 64px; border-radius: 32px; background: #F0EFEC; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+  .chat-icon svg { width: 32px; height: 32px; color: #CCC; }
+  .chat-empty-title { font-size: 16px; font-weight: 700; color: #1A1A1A; margin-bottom: 6px; }
+  .chat-empty-sub { font-size: 14px; color: #999; text-align: center; line-height: 20px; margin-bottom: 20px; max-width: 260px; }
+  .chips { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .chip { background: #fff; border-radius: 10px; padding: 11px 14px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 500; color: #555; transition: background .15s; }
+  .chip:hover { background: #F5F4F0; }
+  .chat-bar { display: flex; align-items: flex-end; gap: 8px; padding: 12px 16px 20px; border-top: 1px solid #F0EFEC; background: #FAFAF9; flex-shrink: 0; }
+  .chat-input { flex: 1; background: #fff; border: 1px solid #EDEDEB; border-radius: 12px; padding: 12px 14px; font-size: 14px; color: #1A1A1A; font-family: inherit; outline: none; resize: none; }
+  .chat-input:focus { border-color: #CCC; }
+  .chat-send { width: 40px; height: 40px; border-radius: 10px; background: #1A1A1A; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .chat-send svg { width: 18px; height: 18px; color: #fff; }
 
-  /* ─── SETTINGS / PROFILE ─── */
-  .settings-overlay { position: absolute; inset: 0; z-index: 35; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; }
-  .settings-overlay.open { opacity: 1; pointer-events: auto; }
-  .settings-modal { position: absolute; bottom: 0; left: 0; right: 0; top: 40px; background: #FAF9F7; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; transform: translateY(100%); transition: transform .3s ease-out; }
-  .settings-overlay.open .settings-modal { transform: translateY(0); }
-  .settings-scroll { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 60px; }
-  .settings-scroll::-webkit-scrollbar { display: none; }
-  .settings-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .settings-title { font-size: 28px; font-weight: 700; color: #1A1A1A; }
-  .settings-close { background: none; border: none; font-size: 16px; color: #6B6B6B; font-weight: 500; cursor: pointer; }
+  /* ─── Modals ─── */
+  .overlay { position: absolute; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: flex-end; z-index: 20; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .sheet { background: #fff; border-radius: 18px 18px 0 0; padding: 20px 24px 36px; width: 100%; transform: translateY(100%); transition: transform .25s ease-out; }
+  .overlay.open .sheet { transform: translateY(0); }
+  .sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: #DDD; margin: 0 auto 16px; }
+  .sheet-title { font-size: 18px; font-weight: 700; color: #1A1A1A; margin-bottom: 16px; letter-spacing: -.2px; }
+  .sheet-opt { display: flex; align-items: center; background: #FAFAF9; border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; cursor: pointer; transition: background .15s; }
+  .sheet-opt:hover { background: #F0EFEC; }
+  .sheet-opt-label { font-size: 14px; font-weight: 600; color: #1A1A1A; }
+  .sheet-opt-sub { font-size: 12px; color: #999; margin-top: 1px; }
+  .sheet-opt .token-pill { margin-left: auto; }
 
-  .token-card { background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; cursor: pointer; }
-  .token-card:hover { background: #FAFAF8; }
-  .token-card-left { display: flex; align-items: center; gap: 12px; }
-  .token-card-icon { font-size: 28px; }
-  .token-card-title { font-size: 16px; font-weight: 700; color: #1A1A1A; }
-  .token-card-sub { font-size: 13px; color: #A0A0A0; margin-top: 1px; }
-  .token-card-balance { font-size: 28px; font-weight: 700; color: #1A1A1A; }
+  /* Full-screen modal */
+  .fs-overlay { position: absolute; inset: 0; z-index: 30; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; }
+  .fs-overlay.open { opacity: 1; pointer-events: auto; }
+  .fs-modal { position: absolute; bottom: 0; left: 0; right: 0; top: 44px; background: #FAFAF9; border-radius: 18px 18px 0 0; display: flex; flex-direction: column; transform: translateY(100%); transition: transform .3s ease-out; }
+  .fs-overlay.open .fs-modal { transform: translateY(0); }
+  .fs-scroll { flex: 1; overflow-y: auto; padding: 20px 24px 40px; }
+  .fs-scroll::-webkit-scrollbar { display: none; }
+  .fs-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .fs-title { font-size: 22px; font-weight: 700; color: #1A1A1A; letter-spacing: -.2px; }
+  .fs-close { font-size: 15px; color: #999; font-weight: 500; cursor: pointer; background: none; border: none; }
+  .fs-subtitle { font-size: 14px; color: #999; margin-bottom: 20px; }
+  .plan-card { background: #fff; border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; }
+  .plan-input { width: 100%; background: #FAFAF9; border: 1px solid #F0EFEC; border-radius: 8px; padding: 12px; font-size: 14px; color: #1A1A1A; font-family: inherit; outline: none; }
+  .plan-input:focus { border-color: #CCC; }
+  .plan-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .plan-action { flex: 1; padding: 8px; border-radius: 8px; background: #F5F4F0; border: none; font-size: 12px; font-weight: 600; color: #888; cursor: pointer; text-align: center; }
+  .plan-action:hover { background: #EEEDEA; color: #555; }
+  .dark-btn { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 12px; letter-spacing: -.2px; }
+  .dark-btn:hover { background: #2A2A2A; }
 
-  .s-section-hdr { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
-  .s-section-hdr svg { width: 16px; height: 16px; color: #A0A0A0; }
-  .s-section-label { font-size: 14px; font-weight: 700; color: #A0A0A0; letter-spacing: .5px; }
+  /* Center modal */
+  .center-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; z-index: 35; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; padding: 28px; }
+  .center-overlay.open { opacity: 1; pointer-events: auto; }
+  .center-card { background: #fff; border-radius: 18px; padding: 22px; width: 100%; }
+  .center-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .center-title { font-size: 20px; font-weight: 700; color: #1A1A1A; letter-spacing: -.2px; }
+  .center-close { background: none; border: none; font-size: 20px; color: #BBB; cursor: pointer; }
 
-  .history-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #F0F0EC; }
-  .history-label { font-size: 15px; color: #1A1A1A; font-weight: 500; }
-  .history-date { font-size: 12px; color: #A0A0A0; margin-top: 2px; }
-  .history-amount { font-size: 15px; color: #A0A0A0; font-weight: 600; margin-left: auto; }
-
-  .s-field-label { font-size: 14px; font-weight: 600; color: #1A1A1A; margin-bottom: 8px; margin-top: 18px; }
-  .s-input { width: 100%; background: #fff; border: 1px solid #EDEDEB; border-radius: 12px; padding: 14px; font-size: 15px; color: #1A1A1A; font-family: inherit; outline: none; }
-  .s-input:focus { border-color: #C0C0C0; }
-  .s-textarea { min-height: 100px; resize: none; }
-
-  .focus-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-  .focus-chip { width: calc(50% - 4px); padding: 12px; border-radius: 12px; border: 1px solid #EDEDEB; background: #fff; text-align: center; font-size: 14px; font-weight: 500; color: #1A1A1A; cursor: pointer; }
-  .focus-chip:hover { background: #F5F5F0; }
-  .focus-chip.selected { background: #1A1A1A; border-color: #1A1A1A; color: #fff; }
-
-  .option-row { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #EDEDEB; border-radius: 12px; padding: 14px; margin-bottom: 8px; cursor: pointer; font-size: 15px; font-weight: 500; color: #1A1A1A; }
-  .option-row:hover { background: #F5F5F0; }
-  .option-row.selected { background: #1A1A1A; border-color: #1A1A1A; color: #fff; }
-  .option-check { font-size: 16px; }
-
-  .schedule-row { display: flex; gap: 12px; }
-  .schedule-box { flex: 1; background: #fff; border: 1px solid #EDEDEB; border-radius: 12px; padding: 14px; text-align: center; }
-  .schedule-lbl { font-size: 12px; color: #A0A0A0; margin-bottom: 4px; }
-  .schedule-time { font-size: 16px; font-weight: 600; color: #1A1A1A; }
-
-  .toggle-row { display: flex; align-items: center; background: #fff; border: 1px solid #EDEDEB; border-radius: 12px; padding: 16px; margin-bottom: 8px; }
-  .toggle-info { flex: 1; }
-  .toggle-lbl { font-size: 15px; font-weight: 600; color: #1A1A1A; }
-  .toggle-sub { font-size: 12px; color: #A0A0A0; margin-top: 2px; }
-  .s-toggle { width: 44px; height: 24px; border-radius: 12px; background: #EDEDEB; position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
-  .s-toggle.on { background: #1A1A1A; }
-  .s-toggle::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 10px; background: #fff; top: 2px; left: 2px; transition: left .2s; }
-  .s-toggle.on::after { left: 22px; }
-
-  .email-meta { margin-top: 8px; margin-bottom: 8px; }
-  .email-meta-text { font-size: 13px; color: #A0A0A0; margin-bottom: 4px; }
-
-  .s-save-btn { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 24px; }
-  .s-save-btn:hover { background: #333; }
-  .s-signout-btn { display: block; width: 100%; border: 1px solid #EDEDEB; background: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; color: #1A1A1A; text-align: center; cursor: pointer; margin-top: 16px; }
-  .s-delete-btn { display: block; width: 100%; background: none; border: none; padding: 16px; font-size: 15px; font-weight: 500; color: #D44; text-align: center; cursor: pointer; margin-top: 4px; }
-  .s-footer-email { text-align: center; font-size: 12px; color: #A0A0A0; margin-top: 8px; }
+  /* Day detail sheet */
+  .detail-row { background: #FAFAF9; border-radius: 10px; padding: 14px; margin-bottom: 8px; }
+  .detail-type { font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 4px; }
+  .detail-text { font-size: 14px; color: #1A1A1A; line-height: 20px; }
+  .detail-text.dim { color: #BBB; }
+  .detail-status { font-size: 11px; font-weight: 600; float: right; }
 
   /* Tab bar */
-  .tab-bar { display: flex; justify-content: space-around; align-items: flex-end; padding: 8px 0 28px; background: #FAF9F7; border-top: 1px solid #EDEDEB; flex-shrink: 0; }
-  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; user-select: none; flex: 1; }
-  .tab svg { width: 24px; height: 24px; }
-  .tab .label { font-size: 11px; font-weight: 500; }
-  .tab.active svg { color: #1A1A1A; }
-  .tab.active .label { color: #1A1A1A; font-weight: 700; }
-  .tab.inactive svg { color: #A0A0A0; }
-  .tab.inactive .label { color: #A0A0A0; }
-  .home-indicator { width: 134px; height: 5px; background: #1A1A1A; border-radius: 100px; margin: 8px auto 8px; flex-shrink: 0; }
+  .tab-bar { display: flex; justify-content: space-around; align-items: flex-end; padding: 6px 0 26px; background: #FAFAF9; border-top: 1px solid #F0EFEC; flex-shrink: 0; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; user-select: none; flex: 1; }
+  .tab svg { width: 22px; height: 22px; }
+  .tab .lbl { font-size: 10px; font-weight: 500; }
+  .tab.on svg { color: #1A1A1A; }
+  .tab.on .lbl { color: #1A1A1A; font-weight: 700; }
+  .tab.off svg { color: #C0C0C0; }
+  .tab.off .lbl { color: #C0C0C0; }
+  .home-ind { width: 134px; height: 5px; background: #1A1A1A; border-radius: 100px; margin: 6px auto 6px; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -318,61 +201,52 @@
     </div>
   </div>
 
-  <!-- ═══ TODAY SCREEN ═══ -->
-  <div class="screen-content" id="screen-today">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 24px 8px;">
-      <div class="streak-badge"><span class="streak-text">↗ 12 days</span></div>
-      <div class="cal-avatar" onclick="openSettings()" style="cursor:pointer">
-        <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;color:#7A7A7A"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>
+  <!-- ═══ TODAY ═══ -->
+  <div class="screen" id="screen-today">
+    <div class="topbar">
+      <div class="streak" onclick="toggleStreak(this)">12 days
+        <div class="streak-dd"><div>Total: 12 days</div><div style="color:#E8584A">Hard: 14 days</div><div style="color:#3DBBAA">Routine: 18 days</div><div style="color:#4A9FD9">New: 9 days</div></div>
       </div>
+      <div class="avatar" onclick="openSettings()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg></div>
     </div>
-    <div class="screen-inner" style="padding-top:8px;">
+    <div class="pad">
       <div class="greeting">Good evening</div>
-      <div class="subtitle">Set 3 intentions for today</div>
-      <div class="sleep-card">
-        <div class="sleep-label">How did you sleep?</div>
-        <div class="sleep-row">
-          <div class="sleep-option" onclick="pickSleep(this)"><span class="sleep-emoji">🌧️</span></div>
-          <div class="sleep-option" onclick="pickSleep(this)"><span class="sleep-emoji">😢</span></div>
-          <div class="sleep-option" onclick="pickSleep(this)"><span class="sleep-emoji">😐</span></div>
-          <div class="sleep-option active" onclick="pickSleep(this)"><span class="sleep-emoji">🙂</span></div>
-          <div class="sleep-option" onclick="pickSleep(this)"><span class="sleep-emoji">😁</span></div>
-        </div>
+      <div class="sleep-row">
+        <span class="sleep-dot" onclick="pickSleep(this)">🌧️</span>
+        <span class="sleep-dot" onclick="pickSleep(this)">😢</span>
+        <span class="sleep-dot" onclick="pickSleep(this)">😐</span>
+        <span class="sleep-dot on" onclick="pickSleep(this)">🙂</span>
+        <span class="sleep-dot" onclick="pickSleep(this)">😁</span>
       </div>
-      <div class="goal-card">
-        <div class="goal-header"><span class="goal-emoji">🔥</span><div style="flex:1"><div class="goal-label">Hard</div><div class="goal-hint">Push your limits</div></div></div>
-        <div class="goal-text">Ship the landing page redesign</div>
-        <button class="stuck-btn" onclick="openStuck()">💡 I'm stuck</button>
+
+      <div class="goal hard">
+        <div class="goal-type">Hard</div>
+        <div class="goal-body">Ship the landing page redesign</div>
+        <button class="goal-note-btn" onclick="toggleNote(this)">notes</button>
+        <textarea class="goal-note" placeholder="How's it going?"></textarea>
       </div>
-      <div class="goal-card">
-        <div class="goal-header"><span class="goal-emoji">🔄</span><div style="flex:1"><div class="goal-label">Routine</div><div class="goal-hint">Build consistency</div></div></div>
-        <div class="goal-text">30 min morning run</div>
-        <button class="stuck-btn" onclick="openStuck()">💡 I'm stuck</button>
+      <div class="goal routine">
+        <div class="goal-type">Routine</div>
+        <div class="goal-body">30 min morning run</div>
+        <button class="goal-note-btn" onclick="toggleNote(this)">notes</button>
+        <textarea class="goal-note" placeholder="How's it going?"></textarea>
       </div>
-      <div class="goal-card">
-        <div class="goal-header"><span class="goal-emoji">✨</span><div style="flex:1"><div class="goal-label">New</div><div class="goal-hint">Try something fresh</div></div></div>
-        <div class="goal-text">Read 20 pages of DDIA</div>
-        <button class="stuck-btn" onclick="openStuck()">💡 I'm stuck</button>
+      <div class="goal new">
+        <div class="goal-type">New</div>
+        <div class="goal-body">Read 20 pages of DDIA</div>
+        <button class="goal-note-btn" onclick="toggleNote(this)">notes</button>
+        <textarea class="goal-note" placeholder="How's it going?"></textarea>
       </div>
-      <button class="plan-cta" onclick="openPlan()">Plan tomorrow</button>
+
+      <button class="plan-btn" onclick="openPlan()">Plan tomorrow</button>
     </div>
   </div>
 
-  <!-- ═══ CALENDAR SCREEN ═══ -->
-  <div class="cal-screen" id="screen-calendar">
-    <div class="cal-topbar">
-      <div class="streak-badge" onclick="toggleStreaks()">
-        <span class="streak-text">↗ 12 days</span>
-        <div class="streak-dropdown" id="streakDD">
-          <div class="streak-dd-row">Total: 12 days</div>
-          <div class="streak-dd-row" style="color:#FF6B6B">🔥 Hard: 14 days</div>
-          <div class="streak-dd-row" style="color:#4ECDC4">🔄 Routine: 18 days</div>
-          <div class="streak-dd-row" style="color:#45B7D1">✨ New: 9 days</div>
-        </div>
-      </div>
-      <div class="cal-avatar" onclick="openSettings()" style="cursor:pointer">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>
-      </div>
+  <!-- ═══ CALENDAR ═══ -->
+  <div class="screen-flex" id="screen-calendar">
+    <div class="topbar">
+      <div class="streak" onclick="toggleStreak(this)">12 days<div class="streak-dd"><div>Total: 12 days</div><div style="color:#E8584A">Hard: 14 days</div><div style="color:#3DBBAA">Routine: 18 days</div><div style="color:#4A9FD9">New: 9 days</div></div></div>
+      <div class="avatar" onclick="openSettings()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg></div>
     </div>
     <div class="month-nav">
       <button class="month-arrow" onclick="changeMonth(-1)">‹</button>
@@ -382,545 +256,284 @@
     <div class="week-hdr"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
     <div class="cal-grid" id="calGrid"></div>
     <div class="cal-legend">
-      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#34C759"></div><span class="cal-legend-label">All done</span></div>
-      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#FFBD2E"></div><span class="cal-legend-label">Partial</span></div>
-      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#C62828"></div><span class="cal-legend-label">Missed</span></div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#3DBBAA"></div><span class="cal-legend-label">Done</span></div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#E8C84A"></div><span class="cal-legend-label">Partial</span></div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#D4574A"></div><span class="cal-legend-label">Missed</span></div>
     </div>
   </div>
 
-  <!-- Placeholder screens -->
-  <!-- ═══ STATS SCREEN ═══ -->
-  <div class="stats-screen" id="screen-stats">
-    <div class="stats-topbar">
-      <div class="streak-badge" onclick="toggleStreaks()"><span class="streak-text">↗ 12 days</span>
-        <div class="streak-dropdown" id="streakDD2">
-          <div class="streak-dd-row">Total: 12 days</div>
-          <div class="streak-dd-row" style="color:#FF6B6B">🔥 Hard: 14 days</div>
-          <div class="streak-dd-row" style="color:#4ECDC4">🔄 Routine: 18 days</div>
-          <div class="streak-dd-row" style="color:#45B7D1">✨ New: 9 days</div>
-        </div>
-      </div>
-      <div class="stats-right">
-        <div class="stats-help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 015.12 1.5c0 1.5-2.12 2-2.12 3.5"/><circle cx="12" cy="17.5" r=".5" fill="currentColor"/></svg></div>
-        <div class="stats-token-pill" onclick="openPurchase()">⚡ 5 tokens</div>
+  <!-- ═══ STATS ═══ -->
+  <div class="screen-flex" id="screen-stats">
+    <div class="topbar">
+      <div class="streak" onclick="toggleStreak(this)">12 days<div class="streak-dd"><div>Total: 12 days</div><div style="color:#E8584A">Hard: 14 days</div><div style="color:#3DBBAA">Routine: 18 days</div><div style="color:#4A9FD9">New: 9 days</div></div></div>
+      <div class="topbar-right">
+        <div class="token-pill" onclick="openPurchase()">5 tokens</div>
       </div>
     </div>
     <div class="stats-scroll">
-      <div class="stats-section-label">TODAY</div>
-
-      <!-- Streak card -->
-      <div class="stats-card">
-        <div class="stats-card-hdr">
-          <div class="stats-card-title">🔥 12 day streak</div>
-          <div class="stats-active-badge">Active</div>
-        </div>
-        <div class="stats-card-body">You've checked in 12 days in a row. Building momentum.</div>
-        <button class="stats-dive" onclick="openDive('12 day streak')">⚡ Dive deeper</button>
+      <div class="section-label">Today</div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">12 day streak</div><div class="card-badge">Active</div></div>
+        <div class="card-body">You've checked in 12 days in a row.</div>
+        <button class="card-link" onclick="openDive('12 day streak')">Dive deeper</button>
       </div>
-
-      <!-- Routine card -->
-      <div class="stats-card">
-        <div class="stats-card-title">🔄 Routine strength</div>
-        <div class="stats-card-body">5/7 routines completed this week. This consistency is protecting your momentum.</div>
-        <button class="stats-dive" onclick="openDive('Routine strength')">⚡ Dive deeper</button>
+      <div class="card">
+        <div class="card-title">Routine strength</div>
+        <div class="card-body">5/7 routines completed this week.</div>
+        <button class="card-link" onclick="openDive('Routine strength')">Dive deeper</button>
       </div>
-
-      <!-- Past day 1 -->
-      <div class="stats-section-label">WEDNESDAY, MAR 12</div>
-      <div class="stats-card">
-        <div class="stats-card-title">✨ Wed, Mar 12: 3/3 goals</div>
-        <div class="stats-card-body">Perfect day — you crushed your hard goal, kept your routine, and tried something new.</div>
-        <div class="stats-tags">
-          <span class="stats-tag done">Hard ✓</span>
-          <span class="stats-tag done">Routine ✓</span>
-          <span class="stats-tag done">New ✓</span>
-        </div>
-        <button class="stats-dive" onclick="openDive('Wed, Mar 12: 3/3 goals')">⚡ Dive deeper</button>
+      <div class="section-label">Wednesday, Mar 12</div>
+      <div class="card">
+        <div class="card-title">3/3 goals</div>
+        <div class="card-body">Perfect day — all goals completed.</div>
+        <div class="tags"><span class="tag done">Hard ✓</span><span class="tag done">Routine ✓</span><span class="tag done">New ✓</span></div>
+        <button class="card-link" onclick="openDive('Wed Mar 12')">Dive deeper</button>
       </div>
-
-      <!-- Past day 2 -->
-      <div class="stats-section-label">TUESDAY, MAR 11</div>
-      <div class="stats-card">
-        <div class="stats-card-title">✨ Tue, Mar 11: 2/3 goals</div>
-        <div class="stats-card-body">You crushed your hard goal and kept your routine, but the new goal didn't happen.</div>
-        <div class="stats-tags">
-          <span class="stats-tag done">Hard ✓</span>
-          <span class="stats-tag done">Routine ✓</span>
-          <span class="stats-tag missed">New ✗</span>
-        </div>
-        <button class="stats-dive" onclick="openDive('Tue, Mar 11: 2/3 goals')">⚡ Dive deeper</button>
-      </div>
-
-      <!-- Past day 3 -->
-      <div class="stats-section-label">MONDAY, MAR 10</div>
-      <div class="stats-card">
-        <div class="stats-card-title">✨ Mon, Mar 10: 1/3 goals</div>
-        <div class="stats-card-body">You kept your routine, but the hard goal slipped and new goal didn't happen.</div>
-        <div class="stats-tags">
-          <span class="stats-tag missed">Hard ✗</span>
-          <span class="stats-tag done">Routine ✓</span>
-          <span class="stats-tag missed">New ✗</span>
-        </div>
-        <button class="stats-dive" onclick="openDive('Mon, Mar 10: 1/3 goals')">⚡ Dive deeper</button>
-      </div>
-    </div>
-  </div>
-  <!-- ═══ INSIGHTS SCREEN ═══ -->
-  <div class="insights-screen" id="screen-insights">
-    <div style="display:flex;padding:12px 24px 8px;">
-      <div class="streak-badge" onclick="toggleStreaks()"><span class="streak-text">↗ 12 days</span>
-        <div class="streak-dropdown" id="streakDD3">
-          <div class="streak-dd-row">Total: 12 days</div>
-          <div class="streak-dd-row" style="color:#FF6B6B">🔥 Hard: 14 days</div>
-          <div class="streak-dd-row" style="color:#4ECDC4">🔄 Routine: 18 days</div>
-          <div class="streak-dd-row" style="color:#45B7D1">✨ New: 9 days</div>
-        </div>
-      </div>
-    </div>
-    <div class="insights-header">
-      <div class="insights-heading">Insights</div>
-      <div class="insights-subheading">Receipts of growth. No edits. Just what the data showed.</div>
-    </div>
-    <div class="insights-toggle">
-      <div class="insights-tog-opt active" onclick="toggleInsights(this,'weekly')">💡 Weekly</div>
-      <div class="insights-tog-opt" onclick="toggleInsights(this,'monthly')">📖 Monthly</div>
-    </div>
-    <!-- Weekly view (with sample data) -->
-    <div class="insights-scroll" id="insightsWeekly">
-      <div class="insights-card">
-        <div class="insights-card-label">Mar 9 – Mar 15</div>
-        <div class="insights-card-rate">78% completion</div>
-        <div class="insights-card-narrative">Mixed results — 78% completion. Routines held at 86% but hard goals dropped to 57%.</div>
-        <div class="insights-rate-row">
-          <span class="insights-rate-pill" style="color:#FF6B6B">🔥 Hard 57%</span>
-          <span class="insights-rate-pill" style="color:#4ECDC4">🔄 Routine 86%</span>
-          <span class="insights-rate-pill" style="color:#45B7D1">✨ New 71%</span>
-        </div>
-        <div class="insights-card-meta">7 days tracked · 14/18 goals hit</div>
-        <button class="stats-dive" style="margin-top:12px" onclick="openDive('Mar 9–15 — 78% completion')">⚡ Dive deeper</button>
-      </div>
-      <div class="insights-card">
-        <div class="insights-card-label">Mar 2 – Mar 8</div>
-        <div class="insights-card-rate">90% completion</div>
-        <div class="insights-card-narrative">Strong period — 90% completion rate across 7 days. Your consistency is compounding.</div>
-        <div class="insights-rate-row">
-          <span class="insights-rate-pill" style="color:#FF6B6B">🔥 Hard 86%</span>
-          <span class="insights-rate-pill" style="color:#4ECDC4">🔄 Routine 100%</span>
-          <span class="insights-rate-pill" style="color:#45B7D1">✨ New 86%</span>
-        </div>
-        <div class="insights-card-meta">7 days tracked · 19/21 goals hit</div>
-        <button class="stats-dive" style="margin-top:12px" onclick="openDive('Mar 2–8 — 90% completion')">⚡ Dive deeper</button>
-      </div>
-      <div class="insights-card">
-        <div class="insights-card-label">Feb 23 – Mar 1</div>
-        <div class="insights-card-rate">43% completion</div>
-        <div class="insights-card-narrative">Tough stretch — only 43% completion. Consider whether your goals are sized right for this season.</div>
-        <div class="insights-rate-row">
-          <span class="insights-rate-pill" style="color:#FF6B6B">🔥 Hard 29%</span>
-          <span class="insights-rate-pill" style="color:#4ECDC4">🔄 Routine 57%</span>
-          <span class="insights-rate-pill" style="color:#45B7D1">✨ New 43%</span>
-        </div>
-        <div class="insights-card-meta">7 days tracked · 9/21 goals hit</div>
-        <button class="stats-dive" style="margin-top:12px" onclick="openDive('Feb 23–Mar 1 — 43% completion')">⚡ Dive deeper</button>
-      </div>
-    </div>
-    <!-- Monthly view -->
-    <div class="insights-scroll" id="insightsMonthly" style="display:none">
-      <div class="insights-card">
-        <div class="insights-card-label">March 2026</div>
-        <div class="insights-card-rate">82% completion</div>
-        <div class="insights-card-narrative">Strong period — 82% completion rate across 13 days. Your consistency is compounding.</div>
-        <div class="insights-rate-row">
-          <span class="insights-rate-pill" style="color:#FF6B6B">🔥 Hard 69%</span>
-          <span class="insights-rate-pill" style="color:#4ECDC4">🔄 Routine 92%</span>
-          <span class="insights-rate-pill" style="color:#45B7D1">✨ New 77%</span>
-        </div>
-        <div class="insights-card-meta">13 days tracked · 31/39 goals hit</div>
-        <button class="stats-dive" style="margin-top:12px" onclick="openDive('March 2026 — 82% completion')">⚡ Dive deeper</button>
-      </div>
-      <div class="insights-card">
-        <div class="insights-card-label">February 2026</div>
-        <div class="insights-card-rate">61% completion</div>
-        <div class="insights-card-narrative">Mixed results — 61% completion. Routines held at 75% but hard goals dropped to 46%.</div>
-        <div class="insights-rate-row">
-          <span class="insights-rate-pill" style="color:#FF6B6B">🔥 Hard 46%</span>
-          <span class="insights-rate-pill" style="color:#4ECDC4">🔄 Routine 75%</span>
-          <span class="insights-rate-pill" style="color:#45B7D1">✨ New 61%</span>
-        </div>
-        <div class="insights-card-meta">28 days tracked · 51/84 goals hit</div>
-        <button class="stats-dive" style="margin-top:12px" onclick="openDive('February 2026 — 61% completion')">⚡ Dive deeper</button>
+      <div class="section-label">Tuesday, Mar 11</div>
+      <div class="card">
+        <div class="card-title">2/3 goals</div>
+        <div class="card-body">Hard goal and routine landed. New goal slipped.</div>
+        <div class="tags"><span class="tag done">Hard ✓</span><span class="tag done">Routine ✓</span><span class="tag miss">New ✗</span></div>
+        <button class="card-link" onclick="openDive('Tue Mar 11')">Dive deeper</button>
       </div>
     </div>
   </div>
 
-  <!-- ═══ CHAT / REFLECT SCREEN ═══ -->
-  <div class="chat-screen" id="screen-chat">
-    <div style="display:flex;padding:12px 24px 8px;flex-shrink:0;">
-      <div class="streak-badge" onclick="toggleStreaks()"><span class="streak-text">↗ 12 days</span>
-        <div class="streak-dropdown" id="streakDD4">
-          <div class="streak-dd-row">Total: 12 days</div>
-          <div class="streak-dd-row" style="color:#FF6B6B">🔥 Hard: 14 days</div>
-          <div class="streak-dd-row" style="color:#4ECDC4">🔄 Routine: 18 days</div>
-          <div class="streak-dd-row" style="color:#45B7D1">✨ New: 9 days</div>
-        </div>
+  <!-- ═══ INSIGHTS ═══ -->
+  <div class="screen-flex" id="screen-insights">
+    <div class="topbar">
+      <div class="streak" onclick="toggleStreak(this)">12 days<div class="streak-dd"><div>Total: 12 days</div><div style="color:#E8584A">Hard: 14 days</div><div style="color:#3DBBAA">Routine: 18 days</div><div style="color:#4A9FD9">New: 9 days</div></div></div>
+    </div>
+    <div class="insights-hdr">
+      <div class="insights-title">Insights</div>
+      <div class="insights-sub">What the data showed.</div>
+    </div>
+    <div class="toggle-bar">
+      <div class="toggle-opt on" onclick="togInsights(this,'w')">Weekly</div>
+      <div class="toggle-opt" onclick="togInsights(this,'m')">Monthly</div>
+    </div>
+    <div class="i-scroll" id="insWeekly">
+      <div class="i-card">
+        <div class="i-label">Mar 9 – 15</div>
+        <div class="i-rate">78%</div>
+        <div class="i-narrative">Routines held at 86% but hard goals dropped to 57%.</div>
+        <div class="i-pills"><span class="i-pill" style="color:#E8584A">Hard 57%</span><span class="i-pill" style="color:#3DBBAA">Routine 86%</span><span class="i-pill" style="color:#4A9FD9">New 71%</span></div>
+        <button class="card-link" onclick="openDive('Mar 9–15')">Dive deeper</button>
+      </div>
+      <div class="i-card">
+        <div class="i-label">Mar 2 – 8</div>
+        <div class="i-rate">90%</div>
+        <div class="i-narrative">Strong consistency across all three categories.</div>
+        <div class="i-pills"><span class="i-pill" style="color:#E8584A">Hard 86%</span><span class="i-pill" style="color:#3DBBAA">Routine 100%</span><span class="i-pill" style="color:#4A9FD9">New 86%</span></div>
+        <button class="card-link" onclick="openDive('Mar 2–8')">Dive deeper</button>
       </div>
     </div>
-    <div class="chat-header">
-      <div class="chat-header-top"><div class="chat-heading">Reflect</div><div class="chat-token-badge">🪙 5 tokens</div></div>
-      <div class="chat-subheading">Talk through what's on your mind. Each message uses 1 token.</div>
+    <div class="i-scroll" id="insMonthly" style="display:none">
+      <div class="i-card">
+        <div class="i-label">March 2026</div>
+        <div class="i-rate">82%</div>
+        <div class="i-narrative">Consistency is compounding across 13 days.</div>
+        <div class="i-pills"><span class="i-pill" style="color:#E8584A">Hard 69%</span><span class="i-pill" style="color:#3DBBAA">Routine 92%</span><span class="i-pill" style="color:#4A9FD9">New 77%</span></div>
+        <button class="card-link" onclick="openDive('March 2026')">Dive deeper</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHAT ═══ -->
+  <div class="screen-flex" id="screen-chat">
+    <div class="topbar">
+      <div class="streak" onclick="toggleStreak(this)">12 days<div class="streak-dd"><div>Total: 12 days</div><div style="color:#E8584A">Hard: 14 days</div><div style="color:#3DBBAA">Routine: 18 days</div><div style="color:#4A9FD9">New: 9 days</div></div></div>
+      <div class="token-pill">5 tokens</div>
+    </div>
+    <div class="chat-hdr">
+      <div class="chat-title">Reflect</div>
+      <div class="chat-sub">1 token per message</div>
     </div>
     <div class="chat-body">
-      <div class="chat-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+      <div class="chat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
       <div class="chat-empty-title">Start a reflection</div>
-      <div class="chat-empty-desc">Share what's blocking you, what you're avoiding, or what you're noticing about your patterns.</div>
-      <div class="chip-col">
-        <div class="prompt-chip">I keep avoiding my hard goal</div>
-        <div class="prompt-chip">Why do I lose momentum?</div>
-        <div class="prompt-chip">I'm stuck in a loop</div>
+      <div class="chat-empty-sub">What's blocking you? What patterns are you noticing?</div>
+      <div class="chips">
+        <div class="chip">I keep avoiding my hard goal</div>
+        <div class="chip">Why do I lose momentum?</div>
+        <div class="chip">I'm stuck in a loop</div>
       </div>
     </div>
-    <div class="chat-input-row">
+    <div class="chat-bar">
       <input class="chat-input" placeholder="What's on your mind..." />
-      <button class="chat-send-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+      <button class="chat-send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
     </div>
   </div>
 
   <!-- ═══ MODALS ═══ -->
-  <div class="modal-overlay" id="stuckModal" onclick="closeStuck()">
-    <div class="modal-sheet" onclick="event.stopPropagation()">
-      <div class="modal-handle"></div>
-      <div class="modal-title">Need help deciding?</div>
-      <div class="modal-option"><div style="flex:1"><div class="modal-opt-label">💡 Recommend 3 tasks</div><div class="modal-opt-sub">AI-powered suggestions based on your patterns</div></div><div class="token-badge">🪙 1 token</div></div>
-      <div class="modal-option"><div style="flex:1"><div class="modal-opt-label">👥 Phone a friend</div><div class="modal-opt-sub">Let someone help you choose</div></div></div>
+
+  <!-- I'm stuck -->
+  <div class="overlay" id="stuckModal" onclick="closeStuck()">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Need help?</div>
+      <div class="sheet-opt"><div style="flex:1"><div class="sheet-opt-label">Recommend 3 tasks</div><div class="sheet-opt-sub">AI suggestions based on your patterns</div></div><div class="token-pill">1 token</div></div>
+      <div class="sheet-opt"><div style="flex:1"><div class="sheet-opt-label">Phone a friend</div><div class="sheet-opt-sub">Let someone help you choose</div></div></div>
     </div>
   </div>
 
-  <div class="plan-overlay" id="planModal">
-    <div class="plan-modal">
-      <div class="plan-scroll">
-        <div class="plan-header"><div class="plan-title">Plan tomorrow</div><button class="plan-cancel" onclick="closePlan()">Cancel</button></div>
-        <div class="plan-subtitle">Set three intentional goals for tomorrow.</div>
-        <div class="plan-card"><div class="goal-header"><span class="goal-emoji">🔥</span><div style="flex:1"><div class="goal-label">Hard goal</div><div class="goal-hint">Push your limits</div></div></div><input class="plan-input" placeholder="What's the goal?" /><button class="friend-btn">Phone a Friend</button></div>
-        <div class="plan-card"><div class="goal-header"><span class="goal-emoji">🔄</span><div style="flex:1"><div class="goal-label">Routine goal</div><div class="goal-hint">Build consistency</div></div></div><input class="plan-input" placeholder="What's the goal?" /><button class="friend-btn">Phone a Friend</button></div>
-        <div class="plan-card"><div class="goal-header"><span class="goal-emoji">✨</span><div style="flex:1"><div class="goal-label">New goal</div><div class="goal-hint">Try something fresh</div></div></div><input class="plan-input" placeholder="What's the goal?" /><button class="friend-btn">Phone a Friend</button></div>
-        <button class="lock-in-btn" onclick="closePlan()">Lock in tomorrow</button>
+  <!-- Plan tomorrow -->
+  <div class="fs-overlay" id="planModal">
+    <div class="fs-modal">
+      <div class="fs-scroll">
+        <div class="fs-top"><div class="fs-title">Plan tomorrow</div><button class="fs-close" onclick="closePlan()">Cancel</button></div>
+        <div class="fs-subtitle">Three intentional goals.</div>
+        <div class="plan-card">
+          <div class="goal-type">Hard</div>
+          <input class="plan-input" placeholder="What's the goal?" />
+          <div class="plan-actions"><button class="plan-action">Phone a friend</button><button class="plan-action" onclick="closePlan();openStuck()">I'm stuck</button></div>
+        </div>
+        <div class="plan-card">
+          <div class="goal-type">Routine</div>
+          <input class="plan-input" placeholder="What's the goal?" />
+          <div class="plan-actions"><button class="plan-action">Phone a friend</button><button class="plan-action" onclick="closePlan();openStuck()">I'm stuck</button></div>
+        </div>
+        <div class="plan-card">
+          <div class="goal-type">New</div>
+          <input class="plan-input" placeholder="What's the goal?" />
+          <div class="plan-actions"><button class="plan-action">Phone a friend</button><button class="plan-action" onclick="closePlan();openStuck()">I'm stuck</button></div>
+        </div>
+        <button class="dark-btn" onclick="closePlan()">Lock in tomorrow</button>
       </div>
     </div>
   </div>
 
-  <!-- Dive Deeper modal -->
-  <div class="dive-overlay" id="diveModal">
-    <div class="dive-card">
-      <div class="dive-top">
-        <div class="dive-title">Dive Deeper</div>
-        <button class="dive-close" onclick="closeDive()">✕</button>
-      </div>
-      <div class="dive-subtitle" id="diveTopic"></div>
-      <div class="dive-tokens">🪙 Your tokens: 87</div>
-      <div class="dive-body">Get AI-powered deep analysis of this insight. Uses 1 token.</div>
-      <button class="dive-cta" onclick="closeDive()">⚡ Dive Deeper (1 token)</button>
+  <!-- Dive deeper -->
+  <div class="center-overlay" id="diveModal">
+    <div class="center-card">
+      <div class="center-top"><div class="center-title">Dive deeper</div><button class="center-close" onclick="closeDive()">✕</button></div>
+      <div style="font-size:14px;color:#999;margin-bottom:10px" id="diveTopic"></div>
+      <div style="font-size:13px;font-weight:600;color:#B8860B;margin-bottom:10px">Balance: 5 tokens</div>
+      <div style="font-size:14px;color:#777;line-height:20px;margin-bottom:16px">AI-powered analysis of this insight. Uses 1 token.</div>
+      <button class="dark-btn" style="margin-top:0" onclick="closeDive()">Analyze (1 token)</button>
     </div>
   </div>
 
-  <!-- Calendar day detail sheet -->
-  <div class="cal-detail-overlay" id="calDetail" onclick="closeCalDetail()">
-    <div class="cal-detail-sheet" onclick="event.stopPropagation()">
-      <div class="modal-handle"></div>
-      <div class="cal-detail-header">
-        <div class="cal-detail-date" id="calDetailDate"></div>
-        <button class="cal-detail-close" onclick="closeCalDetail()">✕</button>
+  <!-- Token purchase -->
+  <div class="center-overlay" id="purchaseModal" style="z-index:40">
+    <div class="center-card">
+      <div class="center-top"><div class="center-title">Get tokens</div><button class="center-close" onclick="closePurchase()">✕</button></div>
+      <div style="display:flex;justify-content:space-between;background:#F5F0E0;border-radius:10px;padding:12px;margin-bottom:14px"><span style="font-size:13px;font-weight:600;color:#1A1A1A">Balance</span><span style="font-size:14px;font-weight:700;color:#B8860B">5</span></div>
+      <div style="font-size:13px;color:#777;line-height:19px;margin-bottom:6px">Tokens power AI analysis. 5 free every month.</div>
+      <div style="margin-top:12px">
+        <div class="sheet-opt" style="padding:12px 14px;margin-bottom:6px"><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1A1A1A">10 tokens</div><div style="font-size:11px;color:#999">$0.30 each</div></div><div style="font-size:16px;font-weight:700;color:#1A1A1A">$2.99</div></div>
+        <div class="sheet-opt" style="padding:12px 14px;margin-bottom:6px"><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1A1A1A">25 tokens <span style="background:#E8F5F0;color:#2B9B7A;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px;letter-spacing:.3px">BEST VALUE</span></div><div style="font-size:11px;color:#999">$0.20 each</div></div><div style="font-size:16px;font-weight:700;color:#1A1A1A">$4.99</div></div>
+        <div class="sheet-opt" style="padding:12px 14px;margin-bottom:6px"><div style="flex:1"><div style="font-size:14px;font-weight:700;color:#1A1A1A">60 tokens</div><div style="font-size:11px;color:#999">$0.17 each</div></div><div style="font-size:16px;font-weight:700;color:#1A1A1A">$9.99</div></div>
       </div>
+      <div style="font-size:11px;color:#BBB;text-align:center;margin-top:10px">Stripe · Tokens never expire</div>
+    </div>
+  </div>
+
+  <!-- Day detail -->
+  <div class="overlay" id="calDetail" onclick="closeCalDetail()">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="sheet-title" id="calDetailDate" style="margin-bottom:0"></div><button class="center-close" onclick="closeCalDetail()">✕</button></div>
       <div id="calDetailBody"></div>
     </div>
   </div>
 
-  <!-- ═══ TOKEN PURCHASE MODAL ═══ -->
-  <div class="purchase-overlay" id="purchaseModal">
-    <div class="purchase-card">
-      <div class="purchase-top">
-        <div class="purchase-title">Get Tokens</div>
-        <button class="purchase-close" onclick="closePurchase()">✕</button>
-      </div>
-      <div class="purchase-balance">
-        <span class="purchase-bal-label">Current balance</span>
-        <span class="purchase-bal-value">🪙 5</span>
-      </div>
-      <div class="purchase-body">Tokens power the Dive Deeper AI analysis. Each deep insight costs 1 token.</div>
-      <div class="purchase-free">You receive 5 free tokens every month automatically.</div>
-      <div class="purchase-tier">
-        <div style="flex:1"><div class="purchase-tier-title"><span class="purchase-tier-tokens">10 tokens</span></div><div class="purchase-tier-per">$0.30/token</div></div>
-        <div class="purchase-tier-price">$2.99</div>
-      </div>
-      <div class="purchase-tier">
-        <div style="flex:1"><div class="purchase-tier-title"><span class="purchase-tier-tokens">25 tokens</span><span class="purchase-best">BEST VALUE</span></div><div class="purchase-tier-per">$0.20/token</div></div>
-        <div class="purchase-tier-price">$4.99</div>
-      </div>
-      <div class="purchase-tier">
-        <div style="flex:1"><div class="purchase-tier-title"><span class="purchase-tier-tokens">60 tokens</span></div><div class="purchase-tier-per">$0.17/token</div></div>
-        <div class="purchase-tier-price">$9.99</div>
-      </div>
-      <div class="purchase-footer">Secure payments powered by Stripe. Tokens never expire.</div>
-    </div>
-  </div>
-
-  <!-- ═══ SETTINGS / PROFILE MODAL ═══ -->
-  <div class="settings-overlay" id="settingsModal">
-    <div class="settings-modal">
-      <div class="settings-scroll">
-        <div class="settings-top">
-          <div class="settings-title">Settings</div>
-          <button class="settings-close" onclick="closeSettings()">Done</button>
+  <!-- Settings -->
+  <div class="fs-overlay" id="settingsModal" style="z-index:35">
+    <div class="fs-modal">
+      <div class="fs-scroll">
+        <div class="fs-top"><div class="fs-title">Settings</div><button class="fs-close" onclick="closeSettings()">Done</button></div>
+        <div class="card" style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;cursor:pointer" onclick="openPurchase()">
+          <div><div style="font-size:15px;font-weight:700;color:#1A1A1A">Tokens</div><div style="font-size:12px;color:#999">For AI analysis</div></div>
+          <div style="font-size:24px;font-weight:700;color:#1A1A1A">5</div>
         </div>
-
-        <!-- Token card -->
-        <div class="token-card" onclick="openPurchase()">
-          <div class="token-card-left">
-            <span class="token-card-icon">🪙</span>
-            <div><div class="token-card-title">Tokens</div><div class="token-card-sub">For AI deep insights</div></div>
-          </div>
-          <div class="token-card-balance">5</div>
+        <div class="section-label" style="margin-top:20px">Profile</div>
+        <div class="card"><div style="font-size:12px;color:#999;margin-bottom:4px">Display name</div><input class="plan-input" value="Alex" /></div>
+        <div class="section-label">Coach style</div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:12px 16px;border-bottom:1px solid #F0EFEC;display:flex;justify-content:space-between;cursor:pointer;background:#1A1A1A;color:#fff;font-size:14px;font-weight:500">Supportive <span>✓</span></div>
+          <div style="padding:12px 16px;border-bottom:1px solid #F0EFEC;font-size:14px;font-weight:500;color:#1A1A1A;cursor:pointer">Direct</div>
+          <div style="padding:12px 16px;font-size:14px;font-weight:500;color:#1A1A1A;cursor:pointer">Analytical</div>
         </div>
-
-        <!-- Token History -->
-        <div class="s-section-hdr">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span class="s-section-label">Token History</span>
+        <div class="section-label">Focus areas</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <div style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:#1A1A1A;color:#fff">Health</div>
+          <div style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:#F0EFEC;color:#555">Career</div>
+          <div style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:#1A1A1A;color:#fff">Learning</div>
+          <div style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:#F0EFEC;color:#555">Relationships</div>
+          <div style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:#1A1A1A;color:#fff">Craft</div>
+          <div style="padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;background:#F0EFEC;color:#555">Finance</div>
         </div>
-        <div class="history-row"><div style="flex:1"><div class="history-label">Therapist chat message</div><div class="history-date">Mar 13 · 2:41 PM</div></div><div class="history-amount">-1</div></div>
-        <div class="history-row"><div style="flex:1"><div class="history-label">Dive deeper: Routine strength</div><div class="history-date">Mar 12 · 8:15 PM</div></div><div class="history-amount">-1</div></div>
-        <div class="history-row"><div style="flex:1"><div class="history-label">Recommend 3 tasks</div><div class="history-date">Mar 11 · 7:30 AM</div></div><div class="history-amount">-1</div></div>
-
-        <!-- Profile Settings -->
-        <div class="s-section-hdr" style="margin-top:28px">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <span class="s-section-label">Profile Settings</span>
-        </div>
-
-        <div class="s-field-label">Display Name</div>
-        <input class="s-input" value="Alex" />
-
-        <div class="s-field-label">Focus Areas (up to 3)</div>
-        <div class="focus-grid">
-          <div class="focus-chip selected" onclick="this.classList.toggle('selected')">Health</div>
-          <div class="focus-chip" onclick="this.classList.toggle('selected')">Career</div>
-          <div class="focus-chip selected" onclick="this.classList.toggle('selected')">Learning</div>
-          <div class="focus-chip" onclick="this.classList.toggle('selected')">Relationships</div>
-          <div class="focus-chip selected" onclick="this.classList.toggle('selected')">Craft</div>
-          <div class="focus-chip" onclick="this.classList.toggle('selected')">Finance</div>
-        </div>
-
-        <div class="s-field-label">Goal Difficulty</div>
-        <div class="option-row" onclick="pickOption(this,'difficulty')">Light</div>
-        <div class="option-row selected" onclick="pickOption(this,'difficulty')">Moderate <span class="option-check">✓</span></div>
-        <div class="option-row" onclick="pickOption(this,'difficulty')">Ambitious</div>
-
-        <div class="s-field-label">Daily Schedule</div>
-        <div class="schedule-row">
-          <div class="schedule-box"><div class="schedule-lbl">Morning setup</div><div class="schedule-time">7:00 AM</div></div>
-          <div class="schedule-box"><div class="schedule-lbl">Evening check-in</div><div class="schedule-time">9:00 PM</div></div>
-        </div>
-
-        <div class="s-field-label">Coach Style</div>
-        <div class="option-row selected" onclick="pickOption(this,'coach')">Supportive <span class="option-check">✓</span></div>
-        <div class="option-row" onclick="pickOption(this,'coach')">Direct</div>
-        <div class="option-row" onclick="pickOption(this,'coach')">Analytical</div>
-
-        <div class="s-field-label">About Me</div>
-        <textarea class="s-input s-textarea" placeholder="Tell us about yourself for better AI suggestions..." maxlength="500"></textarea>
-        <div style="font-size:12px;color:#A0A0A0;text-align:right;margin-top:4px">0/500</div>
-
-        <!-- Email Insights -->
-        <div class="s-section-hdr" style="margin-top:28px">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 4 12 13 2 4"/></svg>
-          <span class="s-section-label">Email Insights</span>
-        </div>
-
-        <div class="toggle-row">
-          <div class="toggle-info"><div class="toggle-lbl">Weekly Pattern</div><div class="toggle-sub">Behavioral synthesis every week</div></div>
-          <div class="s-toggle on" onclick="this.classList.toggle('on')"></div>
-        </div>
-        <div class="toggle-row">
-          <div class="toggle-info"><div class="toggle-lbl">Monthly Narrative</div><div class="toggle-sub">Identity reflection each month</div></div>
-          <div class="s-toggle on" onclick="this.classList.toggle('on')"></div>
-        </div>
-        <div class="email-meta">
-          <div class="email-meta-text">Send Day: Sunday</div>
-          <div class="email-meta-text">Time: 8:00 PM</div>
-          <div class="email-meta-text">Timezone: America/New_York</div>
-        </div>
-
-        <button class="s-save-btn" onclick="closeSettings()">Save Changes</button>
-        <button class="s-signout-btn">Sign Out</button>
-        <button class="s-delete-btn">Delete Account</button>
-        <div class="s-footer-email">Signed in as alex@threefold.app</div>
+        <button style="display:block;width:100%;border:1px solid #EDEDEB;background:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;color:#1A1A1A;cursor:pointer;margin-top:24px">Sign out</button>
+        <button style="display:block;width:100%;background:none;border:none;padding:12px;font-size:13px;font-weight:500;color:#D44;cursor:pointer;margin-top:4px">Delete account</button>
+        <div style="text-align:center;font-size:11px;color:#BBB;margin-top:6px">alex@threefold.app</div>
       </div>
     </div>
   </div>
 
   <!-- Tab bar -->
   <div class="tab-bar">
-    <div class="tab inactive" data-screen="calendar" onclick="switchTab(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="14" width="3" height="3" rx="0.5"/><rect x="14" y="14" width="3" height="3" rx="0.5"/></svg>
-      <span class="label">Calendar</span>
+    <div class="tab off" data-screen="calendar" onclick="switchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="lbl">Calendar</span>
     </div>
-    <div class="tab inactive" data-screen="stats" onclick="switchTab(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="14" width="4" height="7" rx="1"/><rect x="10" y="9" width="4" height="12" rx="1"/><rect x="16" y="4" width="4" height="17" rx="1"/></svg>
-      <span class="label">Stats</span>
+    <div class="tab off" data-screen="stats" onclick="switchTab(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="14" width="4" height="7" rx="1"/><rect x="10" y="9" width="4" height="12" rx="1"/><rect x="16" y="4" width="4" height="17" rx="1"/></svg>
+      <span class="lbl">Stats</span>
     </div>
-    <div class="tab active" data-screen="today" onclick="switchTab(this)">
+    <div class="tab on" data-screen="today" onclick="switchTab(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>
-      <span class="label">Today</span>
+      <span class="lbl">Today</span>
     </div>
-    <div class="tab inactive" data-screen="insights" onclick="switchTab(this)">
+    <div class="tab off" data-screen="insights" onclick="switchTab(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21h6"/><path d="M10 17h4"/><path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/></svg>
-      <span class="label">Insights</span>
+      <span class="lbl">Insights</span>
     </div>
-    <div class="tab inactive" data-screen="chat" onclick="switchTab(this)">
+    <div class="tab off" data-screen="chat" onclick="switchTab(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-      <span class="label">Chat</span>
+      <span class="lbl">Chat</span>
     </div>
   </div>
-  <div class="home-indicator"></div>
+  <div class="home-ind"></div>
 </div>
 
 <script>
-/* ── Shared ── */
-function pickSleep(el) { document.querySelectorAll('.sleep-option').forEach(o => o.classList.remove('active')); el.classList.add('active'); }
+function pickSleep(el) { document.querySelectorAll('.sleep-dot').forEach(o => o.classList.remove('on')); el.classList.add('on'); }
+function toggleNote(btn) { const t = btn.nextElementSibling; const s = t.classList.toggle('show'); btn.textContent = s ? 'hide notes' : 'notes'; if (s) t.focus(); }
+function toggleStreak(el) { el.querySelector('.streak-dd').classList.toggle('show'); }
 function openStuck() { document.getElementById('stuckModal').classList.add('open'); }
 function closeStuck() { document.getElementById('stuckModal').classList.remove('open'); }
 function openPlan() { document.getElementById('planModal').classList.add('open'); }
 function closePlan() { document.getElementById('planModal').classList.remove('open'); }
+function openDive(topic) { document.getElementById('diveTopic').textContent = topic; document.getElementById('diveModal').classList.add('open'); }
+function closeDive() { document.getElementById('diveModal').classList.remove('open'); }
+function openPurchase() { document.getElementById('purchaseModal').classList.add('open'); }
+function closePurchase() { document.getElementById('purchaseModal').classList.remove('open'); }
+function openSettings() { document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+function togInsights(el, mode) { document.querySelectorAll('.toggle-opt').forEach(o => o.classList.remove('on')); el.classList.add('on'); document.getElementById('insWeekly').style.display = mode === 'w' ? '' : 'none'; document.getElementById('insMonthly').style.display = mode === 'm' ? '' : 'none'; }
 
 function switchTab(el) {
-  document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active'); t.classList.add('inactive'); });
-  el.classList.remove('inactive'); el.classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => { t.classList.remove('on'); t.classList.add('off'); });
+  el.classList.remove('off'); el.classList.add('on');
   ['today','calendar','stats','insights','chat'].forEach(s => { document.getElementById('screen-' + s).style.display = 'none'; });
   const t = el.dataset.screen;
   document.getElementById('screen-' + t).style.display = (t === 'today') ? '' : 'flex';
 }
 
-/* ── Calendar logic ── */
+/* Calendar */
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-let calYear, calMonth;
-const now = new Date();
-calYear = now.getFullYear();
-calMonth = now.getMonth();
+const DFULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MSHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let cY, cM; const now = new Date(); cY = now.getFullYear(); cM = now.getMonth();
 const todayStr = now.toISOString().split('T')[0];
-
-// Sample history data for demo
-const sampleHistory = {};
-(function seedData() {
-  const statuses = ['all','partial','missed'];
-  const goals = [
-    { hard: 'Ship redesign', routine: '30 min run', new: 'Read 20 pages' },
-    { hard: 'Deploy API v2', routine: 'Meditate 15 min', new: 'Try watercolors' },
-    { hard: 'Finish pitch deck', routine: 'Journal 10 min', new: 'Cook new recipe' },
-  ];
-  for (let i = 1; i <= 28; i++) {
-    const d = new Date(calYear, calMonth, i);
-    if (d > now) break;
-    const ds = d.toISOString().split('T')[0];
-    const r = Math.random();
-    const si = r < .45 ? 0 : r < .75 ? 1 : 2;
-    const g = goals[i % 3];
-    sampleHistory[ds] = {
-      status: statuses[si],
-      hard: g.hard, routine: g.routine, new: g.new,
-      hardDone: si === 0 || Math.random() > .4,
-      routineDone: si === 0 || Math.random() > .5,
-      newDone: si === 0 ? true : si === 1 ? Math.random() > .5 : false,
-    };
-  }
-})();
-
-function renderCalendar() {
-  document.getElementById('monthLabel').textContent = MONTHS[calMonth] + ' ' + calYear;
-  const grid = document.getElementById('calGrid');
-  grid.innerHTML = '';
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  for (let i = 0; i < firstDay; i++) { const c = document.createElement('div'); c.className = 'cal-cell'; c.innerHTML = '<div class="cal-day empty"></div>'; grid.appendChild(c); }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const entry = sampleHistory[ds];
-    const isFuture = ds > todayStr;
-    const isToday = ds === todayStr;
-    let cls = 'none';
-    if (entry) cls = entry.status;
-    const cell = document.createElement('div');
-    cell.className = 'cal-cell';
-    const dayEl = document.createElement('div');
-    dayEl.className = 'cal-day ' + cls + (isFuture ? ' future' : '') + (isToday ? ' today' : '');
-    dayEl.textContent = d;
-    if (!isFuture && entry) dayEl.onclick = () => openCalDetail(ds, entry);
-    cell.appendChild(dayEl);
-    grid.appendChild(cell);
-  }
-  const total = firstDay + daysInMonth;
-  for (let i = total; i % 7 !== 0; i++) { const c = document.createElement('div'); c.className = 'cal-cell'; c.innerHTML = '<div class="cal-day empty"></div>'; grid.appendChild(c); }
-}
-renderCalendar();
-
-function changeMonth(dir) { calMonth += dir; if (calMonth < 0) { calMonth = 11; calYear--; } if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); }
-
-function toggleStreaks() {
-  document.querySelectorAll('.streak-dropdown').forEach(dd => dd.classList.toggle('show'));
-}
-
-function openCalDetail(ds, entry) {
-  const d = new Date(ds + 'T12:00:00');
-  document.getElementById('calDetailDate').textContent = DAYS_FULL[d.getDay()] + ', ' + MONTHS_SHORT[d.getMonth()] + ' ' + d.getDate();
-  const body = document.getElementById('calDetailBody');
-  body.innerHTML = '';
-  [{label:'HARD', color:'#FF6B6B', goal: entry.hard, done: entry.hardDone},
-   {label:'ROUTINE', color:'#4ECDC4', goal: entry.routine, done: entry.routineDone},
-   {label:'NEW', color:'#45B7D1', goal: entry.new, done: entry.newDone}].forEach(g => {
-    body.innerHTML += `<div class="cal-goal-row">
-      <div class="cal-goal-hdr">
-        <span class="cal-goal-type" style="color:${g.color}">${g.label}</span>
-        <span class="cal-goal-status" style="color:${g.done ? '#2E7D32' : '#A0A0A0'}">${g.done ? 'Done' : 'Missed'}</span>
-      </div>
-      <div class="cal-goal-text ${g.done ? '' : 'dimmed'}">${g.goal}</div>
-    </div>`;
-  });
-  document.getElementById('calDetail').classList.add('open');
-}
-function closeCalDetail() { document.getElementById('calDetail').classList.remove('open'); }
-
-/* Insights toggle */
-function toggleInsights(el, mode) {
-  document.querySelectorAll('.insights-tog-opt').forEach(o => o.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('insightsWeekly').style.display = mode === 'weekly' ? '' : 'none';
-  document.getElementById('insightsMonthly').style.display = mode === 'monthly' ? '' : 'none';
-}
-
-/* Dive deeper */
-function openDive(topic) { document.getElementById('diveTopic').textContent = topic; document.getElementById('diveModal').classList.add('open'); }
-function closeDive() { document.getElementById('diveModal').classList.remove('open'); }
-
-/* Settings */
-function openSettings() { document.getElementById('settingsModal').classList.add('open'); }
-function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
-/* Token purchase */
-function openPurchase() { document.getElementById('purchaseModal').classList.add('open'); }
-function closePurchase() { document.getElementById('purchaseModal').classList.remove('open'); }
-
-function pickOption(el, group) {
-  const parent = el.parentElement;
-  const siblings = parent.querySelectorAll('.option-row');
-  // Only toggle within the same group by checking adjacent rows
-  let rows = [];
-  let node = el;
-  while (node.previousElementSibling && node.previousElementSibling.classList.contains('option-row')) node = node.previousElementSibling;
-  while (node && node.classList.contains('option-row')) { rows.push(node); node = node.nextElementSibling; }
-  rows.forEach(r => { r.classList.remove('selected'); r.innerHTML = r.textContent.replace(' ✓','').trim(); });
-  el.classList.add('selected');
-  el.innerHTML = el.textContent.trim() + ' <span class="option-check">✓</span>';
-}
+const hist = {};
+(function() { const st = ['all','partial','missed']; const g = [{h:'Ship redesign',r:'30 min run',n:'Read 20 pages'},{h:'Deploy API',r:'Meditate',n:'Watercolors'},{h:'Pitch deck',r:'Journal',n:'New recipe'}]; for (let i=1;i<=28;i++){const d=new Date(cY,cM,i);if(d>now)break;const ds=d.toISOString().split('T')[0];const r=Math.random();const si=r<.45?0:r<.75?1:2;const go=g[i%3];hist[ds]={status:st[si],h:go.h,r:go.r,n:go.n,hd:si===0||Math.random()>.4,rd:si===0||Math.random()>.5,nd:si===0?true:si===1?Math.random()>.5:false};}})();
+function renderCal(){document.getElementById('monthLabel').textContent=MONTHS[cM]+' '+cY;const grid=document.getElementById('calGrid');grid.innerHTML='';const fd=new Date(cY,cM,1).getDay();const dim=new Date(cY,cM+1,0).getDate();for(let i=0;i<fd;i++){grid.innerHTML+='<div class="cal-cell"><div class="cal-day empty"></div></div>';}for(let d=1;d<=dim;d++){const ds=`${cY}-${String(cM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const e=hist[ds];const fut=ds>todayStr;const td=ds===todayStr;let cls=e?e.status:'none';const el=document.createElement('div');el.className='cal-cell';el.innerHTML=`<div class="cal-day ${cls}${fut?' future':''}${td?' today':''}">${d}</div>`;if(!fut&&e)el.querySelector('.cal-day').onclick=()=>openDetail(ds,e);grid.appendChild(el);}const tot=fd+dim;for(let i=tot;i%7!==0;i++)grid.innerHTML+='<div class="cal-cell"><div class="cal-day empty"></div></div>';}
+renderCal();
+function changeMonth(dir){cM+=dir;if(cM<0){cM=11;cY--;}if(cM>11){cM=0;cY++;}renderCal();}
+function openDetail(ds,e){const d=new Date(ds+'T12:00:00');document.getElementById('calDetailDate').textContent=DFULL[d.getDay()]+', '+MSHORT[d.getMonth()]+' '+d.getDate();const b=document.getElementById('calDetailBody');b.innerHTML=[{l:'HARD',c:'#E8584A',g:e.h,d:e.hd},{l:'ROUTINE',c:'#3DBBAA',g:e.r,d:e.rd},{l:'NEW',c:'#4A9FD9',g:e.n,d:e.nd}].map(x=>`<div class="detail-row"><div class="detail-type" style="color:${x.c}">${x.l} <span class="detail-status" style="color:${x.d?'#2B7A4B':'#BBB'}">${x.d?'Done':'Missed'}</span></div><div class="detail-text ${x.d?'':'dim'}">${x.g}</div></div>`).join('');document.getElementById('calDetail').classList.add('open');}
+function closeCalDetail(){document.getElementById('calDetail').classList.remove('open');}
 </script>
 
 </body>

@@ -21,6 +21,7 @@ import * as SMS from 'expo-sms';
 import { DayEntry, TomorrowEntry, GoalType } from '../types';
 import {
   getTodayEntry,
+  saveTodayEntry,
   promoteToToday,
   getTomorrowEntry,
   saveTomorrowEntry,
@@ -64,6 +65,8 @@ export default function HomeScreen() {
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [streaks, setStreaks] = useState<StreakInfo>({ total: 0, hard: 0, routine: 0, new: 0 });
   const [tokens, setTokens] = useState(0);
+  const [notes, setNotes] = useState<Record<string, string>>({ hard: '', routine: '', new: '' });
+  const [expandedNote, setExpandedNote] = useState<string | null>(null);
 
   // Plan modal state
   const [hardGoal, setHardGoal] = useState('');
@@ -79,6 +82,9 @@ export default function HomeScreen() {
     await promoteToToday();
     const t = await getTodayEntry();
     setToday(t);
+    if (t) {
+      setNotes({ hard: t.hardNote || '', routine: t.routineNote || '', new: t.newNote || '' });
+    }
     const history = await getHistory();
     setStreaks(computeStreaks(history));
     const bal = await getTokenBalance();
@@ -91,6 +97,15 @@ export default function HomeScreen() {
       loadData();
     }, [])
   );
+
+  const saveNote = async (key: string, value: string) => {
+    setNotes((prev) => ({ ...prev, [key]: value }));
+    if (today) {
+      const updated = { ...today, [`${key}Note`]: value };
+      await saveTodayEntry(updated as DayEntry);
+      setToday(updated as DayEntry);
+    }
+  };
 
   const openPlanModal = async () => {
     const tm = await getTomorrowEntry();
@@ -210,24 +225,20 @@ export default function HomeScreen() {
         <Text style={styles.greeting}>{getGreeting()}</Text>
         <Text style={styles.subtitle}>Set 3 intentions for today</Text>
 
-        {/* Sleep quality card */}
-        <View style={styles.sleepCard}>
-          <Text style={styles.sleepLabel}>How did you sleep?</Text>
-          <View style={styles.sleepRow}>
-            {SLEEP_OPTIONS.map((opt, i) => (
-              <TouchableOpacity
-                key={i}
-                style={[
-                  styles.sleepOption,
-                  sleepRating === i && styles.sleepOptionActive,
-                ]}
-                onPress={() => setSleepRating(i)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.sleepEmoji}>{opt.emoji}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        {/* Sleep quality */}
+        <Text style={styles.sleepLabel}>How did you sleep?</Text>
+        <View style={styles.sleepRow}>
+          {SLEEP_OPTIONS.map((opt, i) => (
+            <TouchableOpacity
+              key={i}
+              onPress={() => setSleepRating(i)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.sleepEmoji, sleepRating === i && styles.sleepEmojiActive]}>
+                {opt.emoji}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Goal cards */}
@@ -270,12 +281,25 @@ export default function HomeScreen() {
               </Text>
 
               <TouchableOpacity
-                style={styles.stuckButton}
-                onPress={() => setStuckGoal(cfg.key)}
+                style={styles.noteToggle}
+                onPress={() => setExpandedNote(expandedNote === cfg.key ? null : cfg.key)}
                 activeOpacity={0.6}
               >
-                <Text style={styles.stuckButtonText}>💡 I'm stuck</Text>
+                <Text style={styles.noteToggleText}>
+                  {expandedNote === cfg.key ? '📝 Hide notes' : '📝 Add notes'}
+                </Text>
               </TouchableOpacity>
+
+              {expandedNote === cfg.key && (
+                <TextInput
+                  style={styles.noteInput}
+                  placeholder="Jot down thoughts, progress, or reflections..."
+                  placeholderTextColor="#A0A0A0"
+                  value={notes[cfg.key]}
+                  onChangeText={(text) => saveNote(cfg.key, text)}
+                  multiline
+                />
+              )}
             </View>
           );
         })}
@@ -409,6 +433,14 @@ export default function HomeScreen() {
                     >
                       <Text style={styles.friendButtonText}>Phone a Friend</Text>
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.stuckButton}
+                      onPress={() => { setShowPlanModal(false); setStuckGoal(cfg.key); }}
+                      activeOpacity={0.6}
+                    >
+                      <Text style={styles.stuckButtonText}>💡 I'm stuck</Text>
+                    </TouchableOpacity>
                   </View>
                 );
               })}
@@ -472,40 +504,24 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 
-  /* Sleep card */
-  sleepCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#EDEDEB',
-    marginBottom: 20,
-  },
+  /* Sleep */
   sleepLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 14,
+    fontSize: 14,
+    color: '#A0A0A0',
+    marginBottom: 8,
   },
   sleepRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  sleepOption: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    backgroundColor: '#F5F5F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sleepOptionActive: {
-    backgroundColor: '#E8E6E1',
-    borderWidth: 2,
-    borderColor: '#1A1A1A',
+    gap: 12,
+    marginBottom: 20,
   },
   sleepEmoji: {
-    fontSize: 24,
+    fontSize: 22,
+    opacity: 0.5,
+  },
+  sleepEmojiActive: {
+    opacity: 1,
+    transform: [{ scale: 1.2 }],
   },
 
   /* Goal cards */
@@ -552,9 +568,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  stuckButton: {
+  noteToggle: {
     alignSelf: 'flex-start',
     marginLeft: 30,
+  },
+  noteToggleText: {
+    fontSize: 13,
+    color: '#A0A0A0',
+    fontWeight: '500',
+  },
+  noteInput: {
+    backgroundColor: '#F9F9F7',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 14,
+    color: '#1A1A1A',
+    marginTop: 10,
+    marginLeft: 30,
+    minHeight: 60,
+    textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: '#EDEDEB',
+  },
+  stuckButton: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
   },
   stuckButtonText: {
     fontSize: 14,

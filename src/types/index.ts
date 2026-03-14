@@ -23,6 +23,9 @@ export interface DayEntry {
   routineStatus: GoalStatus;
   newStatus: GoalStatus;
   reflection?: string;
+  hardNote?: string;
+  routineNote?: string;
+  newNote?: string;
   checkedIn: boolean;
 }
 
