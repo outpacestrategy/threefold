@@ -7,7 +7,10 @@ const KEYS = {
   TOMORROW_ENTRY: 'tomorrowEntry',
   HISTORY: 'history',
   CHAT_MESSAGES: 'chatMessages',
+  TOKEN_BALANCE: 'tokenBalance',
 };
+
+const DEFAULT_TOKENS = 87;
 
 export async function getUserProfile(): Promise<UserProfile | null> {
   const raw = await AsyncStorage.getItem(KEYS.USER_PROFILE);
@@ -87,4 +90,20 @@ export function getTomorrowDate(): string {
 
 export function getTodayDate(): string {
   return new Date().toISOString().split('T')[0];
+}
+
+export async function getTokenBalance(): Promise<number> {
+  const raw = await AsyncStorage.getItem(KEYS.TOKEN_BALANCE);
+  return raw !== null ? parseInt(raw, 10) : DEFAULT_TOKENS;
+}
+
+export async function spendToken(): Promise<number> {
+  const balance = await getTokenBalance();
+  const updated = Math.max(0, balance - 1);
+  await AsyncStorage.setItem(KEYS.TOKEN_BALANCE, String(updated));
+  return updated;
+}
+
+export async function setTokenBalance(amount: number): Promise<void> {
+  await AsyncStorage.setItem(KEYS.TOKEN_BALANCE, String(amount));
 }

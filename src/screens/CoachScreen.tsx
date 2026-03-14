@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,16 +9,30 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { getUserProfile, getChatMessages, saveChatMessages } from '../lib/storage';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  getUserProfile,
+  getChatMessages,
+  saveChatMessages,
+  getTokenBalance,
+  spendToken,
+} from '../lib/storage';
 import { UserProfile, ChatMessage } from '../types';
 
 const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY || 'OPENAI_API_KEY_PLACEHOLDER';
 
+const PROMPT_CHIPS = [
+  'I keep avoiding my hard goal',
+  'Why do I lose momentum?',
+  "I'm stuck in a loop",
+];
+
 function buildSystemPrompt(profile: UserProfile): string {
-  return `You are a personal accountability coach. The user's name is ${profile.name}, their identity is "${profile.identityStatement}". Their focus areas are ${profile.focusAreas.join(', ')}. Tone: ${profile.aiTone}. Help them set meaningful goals, reflect on their day, and stay consistent with their lifestyle intentions. Keep responses short — 2-3 sentences max.`;
+  return `You are a personal accountability coach. The user's name is ${profile.name}, their identity is "${profile.identityStatement}". Their focus areas are ${profile.focusAreas.join(', ')}. Tone: ${profile.aiTone}. Help them reflect on patterns, blockers, and intentions. Keep responses short — 2-3 sentences max.`;
 }
 
 export default function CoachScreen() {
@@ -26,6 +40,7 @@ export default function CoachScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [tokens, setTokens] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
   useFocusEffect(
@@ -35,18 +50,32 @@ export default function CoachScreen() {
         setProfile(p);
         const msgs = await getChatMessages();
         setMessages(msgs as ChatMessage[]);
+        const bal = await getTokenBalance();
+        setTokens(bal);
       })();
     }, [])
   );
 
-  const sendMessage = async () => {
-    if (!input.trim() || !profile) return;
+  const sendMessage = async (text?: string) => {
+    const content = (text || input).trim();
+    if (!content || !profile) return;
 
-    const userMessage: ChatMessage = { role: 'user', content: input.trim() };
+    if (tokens <= 0) {
+      Alert.alert(
+        'No tokens remaining',
+        'You need tokens to send messages. Complete goals to earn more.',
+      );
+      return;
+    }
+
+    const userMessage: ChatMessage = { role: 'user', content };
     const updated = [...messages, userMessage];
     setMessages(updated);
     setInput('');
     setSending(true);
+
+    const newBalance = await spendToken();
+    setTokens(newBalance);
 
     try {
       const systemPrompt = buildSystemPrompt(profile);
@@ -110,28 +139,56 @@ export default function CoachScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.heading}>AI Coach</Text>
-        <Text style={styles.subheading}>Your accountability partner</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.heading}>Reflect</Text>
+          <View style={styles.tokenBadge}>
+            <Text style={styles.tokenText}>🪙 {tokens} tokens</Text>
+          </View>
+        </View>
+        <Text style={styles.subheading}>
+          Talk through what's on your mind. Each message uses 1 token.
+        </Text>
       </View>
 
+      {/* Messages */}
       <FlatList
         ref={flatListRef}
         data={messages}
         keyExtractor={(_, i) => String(i)}
         renderItem={renderMessage}
-        contentContainerStyle={styles.messageList}
+        contentContainerStyle={[
+          styles.messageList,
+          messages.length === 0 && styles.messageListEmpty,
+        ]}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         ListEmptyComponent={
-          <View style={styles.emptyChat}>
-            <Text style={styles.emptyChatTitle}>Start a conversation</Text>
-            <Text style={styles.emptyChatDesc}>
-              Ask for help picking goals, reflect on your day, or get a pep talk.
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconWrap}>
+              <Ionicons name="chatbubble-outline" size={48} color="#C0C0C0" />
+            </View>
+            <Text style={styles.emptyTitle}>Start a reflection</Text>
+            <Text style={styles.emptyDesc}>
+              Share what's blocking you, what you're avoiding, or what you're noticing about your patterns.
             </Text>
+            <View style={styles.chipRow}>
+              {PROMPT_CHIPS.map((chip) => (
+                <TouchableOpacity
+                  key={chip}
+                  style={styles.chip}
+                  onPress={() => sendMessage(chip)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.chipText}>{chip}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         }
       />
 
+      {/* Input bar */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={90}
@@ -139,23 +196,23 @@ export default function CoachScreen() {
         <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
-            placeholder="Ask your coach..."
+            placeholder="What's on your mind..."
             placeholderTextColor="#A0A0A0"
             value={input}
             onChangeText={setInput}
-            onSubmitEditing={sendMessage}
+            onSubmitEditing={() => sendMessage()}
             editable={!sending}
             multiline
           />
           <TouchableOpacity
             style={[styles.sendButton, (!input.trim() || sending) && styles.sendButtonDisabled]}
-            onPress={sendMessage}
+            onPress={() => sendMessage()}
             disabled={!input.trim() || sending}
           >
             {sending ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.sendText}>Send</Text>
+              <Ionicons name="arrow-up" size={20} color="#FFFFFF" />
             )}
           </TouchableOpacity>
         </View>
@@ -169,27 +226,51 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FAF9F7',
   },
+
+  /* Header */
   header: {
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#EDEDEB',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   heading: {
     fontSize: 28,
     fontWeight: '700',
     color: '#1A1A1A',
   },
+  tokenBadge: {
+    backgroundColor: '#FFF8E1',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  tokenText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#F57F17',
+  },
   subheading: {
     fontSize: 14,
     color: '#7A7A7A',
-    marginTop: 2,
+    lineHeight: 20,
   },
+
+  /* Messages */
   messageList: {
     padding: 24,
     paddingBottom: 16,
     flexGrow: 1,
+  },
+  messageListEmpty: {
+    justifyContent: 'center',
   },
   messageBubble: {
     maxWidth: '80%',
@@ -219,25 +300,56 @@ const styles = StyleSheet.create({
   assistantText: {
     color: '#1A1A1A',
   },
-  emptyChat: {
-    flex: 1,
+
+  /* Empty state */
+  emptyState: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  emptyIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F5F5F0',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 80,
+    marginBottom: 16,
   },
-  emptyChatTitle: {
+  emptyTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1A1A1A',
     marginBottom: 8,
   },
-  emptyChatDesc: {
+  emptyDesc: {
     fontSize: 15,
     color: '#7A7A7A',
     textAlign: 'center',
     lineHeight: 22,
-    paddingHorizontal: 40,
+    paddingHorizontal: 16,
+    marginBottom: 24,
   },
+  chipRow: {
+    flexDirection: 'column',
+    gap: 10,
+    width: '100%',
+  },
+  chip: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EDEDEB',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1A1A1A',
+  },
+
+  /* Input bar */
   inputRow: {
     flexDirection: 'row',
     padding: 16,
@@ -261,18 +373,13 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     backgroundColor: '#1A1A1A',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    borderRadius: 12,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendButtonDisabled: {
     opacity: 0.4,
-  },
-  sendText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '600',
   },
 });
