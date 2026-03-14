@@ -188,10 +188,23 @@
   .dive-cta { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; }
   .dive-cta:hover { background: #333; }
 
-  /* Placeholder */
-  .placeholder-screen { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
-  .placeholder-screen .p-title { font-size: 28px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
-  .placeholder-screen .p-sub { font-size: 16px; color: #6B6B6B; }
+  /* ─── INSIGHTS ─── */
+  .insights-screen { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+  .insights-header { padding: 16px 24px 14px; border-bottom: 1px solid #EDEDEB; flex-shrink: 0; }
+  .insights-heading { font-size: 28px; font-weight: 700; color: #1A1A1A; margin-bottom: 4px; }
+  .insights-subheading { font-size: 14px; color: #7A7A7A; line-height: 20px; }
+  .insights-toggle { display: flex; background: #F0F0EC; border-radius: 12px; margin: 16px 24px 8px; padding: 4px; flex-shrink: 0; }
+  .insights-tog-opt { flex: 1; text-align: center; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; color: #A0A0A0; cursor: pointer; transition: all .15s; }
+  .insights-tog-opt.active { background: #fff; color: #1A1A1A; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .insights-scroll { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 40px; min-height: 0; }
+  .insights-scroll::-webkit-scrollbar { display: none; }
+  .insights-card { background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 20px; margin-bottom: 14px; }
+  .insights-card-label { font-size: 13px; font-weight: 600; color: #A0A0A0; margin-bottom: 6px; }
+  .insights-card-rate { font-size: 22px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
+  .insights-card-narrative { font-size: 15px; color: #555; line-height: 22px; margin-bottom: 14px; }
+  .insights-rate-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .insights-rate-pill { background: #F5F5F0; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; }
+  .insights-card-meta { font-size: 12px; color: #A0A0A0; font-weight: 500; }
 
   /* Tab bar */
   .tab-bar { display: flex; justify-content: space-around; align-items: flex-end; padding: 8px 0 28px; background: #FAF9F7; border-top: 1px solid #EDEDEB; flex-shrink: 0; }
@@ -352,7 +365,83 @@
       </div>
     </div>
   </div>
-  <div class="placeholder-screen" id="screen-insights"><div class="p-title">Insights</div><div class="p-sub">Patterns and reflections</div></div>
+  <!-- ═══ INSIGHTS SCREEN ═══ -->
+  <div class="insights-screen" id="screen-insights">
+    <div class="insights-header">
+      <div class="insights-heading">Insights</div>
+      <div class="insights-subheading">Receipts of growth. No edits. Just what the data showed.</div>
+    </div>
+    <div class="insights-toggle">
+      <div class="insights-tog-opt active" onclick="toggleInsights(this,'weekly')">💡 Weekly</div>
+      <div class="insights-tog-opt" onclick="toggleInsights(this,'monthly')">📖 Monthly</div>
+    </div>
+    <!-- Weekly view (with sample data) -->
+    <div class="insights-scroll" id="insightsWeekly">
+      <div class="insights-card">
+        <div class="insights-card-label">Mar 9 – Mar 15</div>
+        <div class="insights-card-rate">78% completion</div>
+        <div class="insights-card-narrative">Mixed results — 78% completion. Routines held at 86% but hard goals dropped to 57%.</div>
+        <div class="insights-rate-row">
+          <span class="insights-rate-pill" style="color:#FF6B6B">🔥 Hard 57%</span>
+          <span class="insights-rate-pill" style="color:#4ECDC4">🔄 Routine 86%</span>
+          <span class="insights-rate-pill" style="color:#45B7D1">✨ New 71%</span>
+        </div>
+        <div class="insights-card-meta">7 days tracked · 14/18 goals hit</div>
+        <button class="stats-dive" style="margin-top:12px" onclick="openDive('Mar 9–15 — 78% completion')">⚡ Dive deeper</button>
+      </div>
+      <div class="insights-card">
+        <div class="insights-card-label">Mar 2 – Mar 8</div>
+        <div class="insights-card-rate">90% completion</div>
+        <div class="insights-card-narrative">Strong period — 90% completion rate across 7 days. Your consistency is compounding.</div>
+        <div class="insights-rate-row">
+          <span class="insights-rate-pill" style="color:#FF6B6B">🔥 Hard 86%</span>
+          <span class="insights-rate-pill" style="color:#4ECDC4">🔄 Routine 100%</span>
+          <span class="insights-rate-pill" style="color:#45B7D1">✨ New 86%</span>
+        </div>
+        <div class="insights-card-meta">7 days tracked · 19/21 goals hit</div>
+        <button class="stats-dive" style="margin-top:12px" onclick="openDive('Mar 2–8 — 90% completion')">⚡ Dive deeper</button>
+      </div>
+      <div class="insights-card">
+        <div class="insights-card-label">Feb 23 – Mar 1</div>
+        <div class="insights-card-rate">43% completion</div>
+        <div class="insights-card-narrative">Tough stretch — only 43% completion. Consider whether your goals are sized right for this season.</div>
+        <div class="insights-rate-row">
+          <span class="insights-rate-pill" style="color:#FF6B6B">🔥 Hard 29%</span>
+          <span class="insights-rate-pill" style="color:#4ECDC4">🔄 Routine 57%</span>
+          <span class="insights-rate-pill" style="color:#45B7D1">✨ New 43%</span>
+        </div>
+        <div class="insights-card-meta">7 days tracked · 9/21 goals hit</div>
+        <button class="stats-dive" style="margin-top:12px" onclick="openDive('Feb 23–Mar 1 — 43% completion')">⚡ Dive deeper</button>
+      </div>
+    </div>
+    <!-- Monthly view -->
+    <div class="insights-scroll" id="insightsMonthly" style="display:none">
+      <div class="insights-card">
+        <div class="insights-card-label">March 2026</div>
+        <div class="insights-card-rate">82% completion</div>
+        <div class="insights-card-narrative">Strong period — 82% completion rate across 13 days. Your consistency is compounding.</div>
+        <div class="insights-rate-row">
+          <span class="insights-rate-pill" style="color:#FF6B6B">🔥 Hard 69%</span>
+          <span class="insights-rate-pill" style="color:#4ECDC4">🔄 Routine 92%</span>
+          <span class="insights-rate-pill" style="color:#45B7D1">✨ New 77%</span>
+        </div>
+        <div class="insights-card-meta">13 days tracked · 31/39 goals hit</div>
+        <button class="stats-dive" style="margin-top:12px" onclick="openDive('March 2026 — 82% completion')">⚡ Dive deeper</button>
+      </div>
+      <div class="insights-card">
+        <div class="insights-card-label">February 2026</div>
+        <div class="insights-card-rate">61% completion</div>
+        <div class="insights-card-narrative">Mixed results — 61% completion. Routines held at 75% but hard goals dropped to 46%.</div>
+        <div class="insights-rate-row">
+          <span class="insights-rate-pill" style="color:#FF6B6B">🔥 Hard 46%</span>
+          <span class="insights-rate-pill" style="color:#4ECDC4">🔄 Routine 75%</span>
+          <span class="insights-rate-pill" style="color:#45B7D1">✨ New 61%</span>
+        </div>
+        <div class="insights-card-meta">28 days tracked · 51/84 goals hit</div>
+        <button class="stats-dive" style="margin-top:12px" onclick="openDive('February 2026 — 61% completion')">⚡ Dive deeper</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══ CHAT / REFLECT SCREEN ═══ -->
   <div class="chat-screen" id="screen-chat">
@@ -555,6 +644,14 @@ function openCalDetail(ds, entry) {
   document.getElementById('calDetail').classList.add('open');
 }
 function closeCalDetail() { document.getElementById('calDetail').classList.remove('open'); }
+
+/* Insights toggle */
+function toggleInsights(el, mode) {
+  document.querySelectorAll('.insights-tog-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('insightsWeekly').style.display = mode === 'weekly' ? '' : 'none';
+  document.getElementById('insightsMonthly').style.display = mode === 'monthly' ? '' : 'none';
+}
 
 /* Dive deeper */
 function openDive(topic) { document.getElementById('diveTopic').textContent = topic; document.getElementById('diveModal').classList.add('open'); }
