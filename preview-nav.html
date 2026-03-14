@@ -19,7 +19,7 @@
   .status-icons svg { width: 16px; height: 16px; }
 
   /* Shared scrollable screen */
-  .screen-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .screen-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; }
   .screen-content::-webkit-scrollbar { display: none; }
   .screen-inner { padding: 24px; padding-bottom: 20px; }
 
@@ -45,7 +45,7 @@
   .plan-cta:hover { background: #333; }
 
   /* ─── CALENDAR ─── */
-  .cal-screen { display: none; flex-direction: column; flex: 1; }
+  .cal-screen { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
   .cal-topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px 8px; flex-shrink: 0; }
   .streak-badge { background: #E6F7F1; border-radius: 20px; padding: 7px 14px; cursor: pointer; position: relative; }
   .streak-text { font-size: 14px; font-weight: 600; color: #2AA87E; }
@@ -99,7 +99,7 @@
   .cal-goal-text.dimmed { color: #A0A0A0; }
 
   /* ─── CHAT / REFLECT ─── */
-  .chat-screen { display: none; flex-direction: column; flex: 1; }
+  .chat-screen { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
   .chat-header { padding: 16px 24px 14px; border-bottom: 1px solid #EDEDEB; flex-shrink: 0; }
   .chat-header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
   .chat-heading { font-size: 28px; font-weight: 700; color: #1A1A1A; }
@@ -151,6 +151,42 @@
   .friend-btn:hover { background: #EEEDEA; }
   .lock-in-btn { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 8px; }
   .lock-in-btn:hover { background: #333; }
+
+  /* ─── STATS ─── */
+  .stats-screen { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+  .stats-topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px 12px; border-bottom: 1px solid #EDEDEB; flex-shrink: 0; }
+  .stats-heading { font-size: 28px; font-weight: 700; color: #1A1A1A; }
+  .stats-right { display: flex; align-items: center; gap: 8px; }
+  .stats-help { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .stats-help svg { width: 24px; height: 24px; color: #A0A0A0; }
+  .stats-token-pill { background: #FFF8E1; border-radius: 20px; padding: 6px 12px; font-size: 13px; font-weight: 600; color: #F57F17; cursor: pointer; }
+  .stats-scroll { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 40px; min-height: 0; }
+  .stats-scroll::-webkit-scrollbar { display: none; }
+  .stats-section-label { font-size: 12px; font-weight: 700; color: #A0A0A0; letter-spacing: 1px; margin-bottom: 12px; margin-top: 8px; }
+  .stats-card { background: #fff; border: 1px solid #EDEDEB; border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+  .stats-card-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .stats-card-title { font-size: 17px; font-weight: 700; color: #1A1A1A; }
+  .stats-active-badge { background: #FFF3E0; border-radius: 10px; padding: 4px 10px; font-size: 12px; font-weight: 600; color: #E65100; }
+  .stats-card-body { font-size: 15px; color: #555; line-height: 22px; margin-bottom: 12px; }
+  .stats-dive { font-size: 14px; font-weight: 600; color: #F57F17; cursor: pointer; background: none; border: none; padding: 0; }
+  .stats-dive:hover { text-decoration: underline; }
+  .stats-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .stats-tag { border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
+  .stats-tag.done { background: #E8F5E9; color: #2E7D32; }
+  .stats-tag.missed { background: #FFEBEE; color: #C62828; }
+
+  /* Dive deeper modal */
+  .dive-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 25; opacity: 0; pointer-events: none; transition: opacity .2s; border-radius: 44px; overflow: hidden; padding: 32px; }
+  .dive-overlay.open { opacity: 1; pointer-events: auto; }
+  .dive-card { background: #fff; border-radius: 20px; padding: 24px; width: 100%; }
+  .dive-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .dive-title { font-size: 22px; font-weight: 700; color: #1A1A1A; }
+  .dive-close { background: none; border: none; font-size: 22px; color: #7A7A7A; cursor: pointer; }
+  .dive-subtitle { font-size: 15px; color: #6B6B6B; margin-bottom: 12px; }
+  .dive-tokens { font-size: 14px; font-weight: 600; color: #F57F17; margin-bottom: 12px; }
+  .dive-body { font-size: 15px; color: #555; line-height: 22px; margin-bottom: 20px; }
+  .dive-cta { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 600; text-align: center; cursor: pointer; }
+  .dive-cta:hover { background: #333; }
 
   /* Placeholder */
   .placeholder-screen { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
@@ -247,7 +283,75 @@
   </div>
 
   <!-- Placeholder screens -->
-  <div class="placeholder-screen" id="screen-stats"><div class="p-title">Stats</div><div class="p-sub">Your progress at a glance</div></div>
+  <!-- ═══ STATS SCREEN ═══ -->
+  <div class="stats-screen" id="screen-stats">
+    <div class="stats-topbar">
+      <div class="stats-heading">Stats</div>
+      <div class="stats-right">
+        <div class="stats-help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 015.12 1.5c0 1.5-2.12 2-2.12 3.5"/><circle cx="12" cy="17.5" r=".5" fill="currentColor"/></svg></div>
+        <div class="stats-token-pill" onclick="openDive('Token balance')">⚡ 87 tokens</div>
+      </div>
+    </div>
+    <div class="stats-scroll">
+      <div class="stats-section-label">TODAY</div>
+
+      <!-- Streak card -->
+      <div class="stats-card">
+        <div class="stats-card-hdr">
+          <div class="stats-card-title">🔥 12 day streak</div>
+          <div class="stats-active-badge">Active</div>
+        </div>
+        <div class="stats-card-body">You've checked in 12 days in a row. Building momentum.</div>
+        <button class="stats-dive" onclick="openDive('12 day streak')">⚡ Dive deeper</button>
+      </div>
+
+      <!-- Routine card -->
+      <div class="stats-card">
+        <div class="stats-card-title">🔄 Routine strength</div>
+        <div class="stats-card-body">5/7 routines completed this week. This consistency is protecting your momentum.</div>
+        <button class="stats-dive" onclick="openDive('Routine strength')">⚡ Dive deeper</button>
+      </div>
+
+      <!-- Past day 1 -->
+      <div class="stats-section-label">WEDNESDAY, MAR 12</div>
+      <div class="stats-card">
+        <div class="stats-card-title">✨ Wed, Mar 12: 3/3 goals</div>
+        <div class="stats-card-body">Perfect day — you crushed your hard goal, kept your routine, and tried something new.</div>
+        <div class="stats-tags">
+          <span class="stats-tag done">Hard ✓</span>
+          <span class="stats-tag done">Routine ✓</span>
+          <span class="stats-tag done">New ✓</span>
+        </div>
+        <button class="stats-dive" onclick="openDive('Wed, Mar 12: 3/3 goals')">⚡ Dive deeper</button>
+      </div>
+
+      <!-- Past day 2 -->
+      <div class="stats-section-label">TUESDAY, MAR 11</div>
+      <div class="stats-card">
+        <div class="stats-card-title">✨ Tue, Mar 11: 2/3 goals</div>
+        <div class="stats-card-body">You crushed your hard goal and kept your routine, but the new goal didn't happen.</div>
+        <div class="stats-tags">
+          <span class="stats-tag done">Hard ✓</span>
+          <span class="stats-tag done">Routine ✓</span>
+          <span class="stats-tag missed">New ✗</span>
+        </div>
+        <button class="stats-dive" onclick="openDive('Tue, Mar 11: 2/3 goals')">⚡ Dive deeper</button>
+      </div>
+
+      <!-- Past day 3 -->
+      <div class="stats-section-label">MONDAY, MAR 10</div>
+      <div class="stats-card">
+        <div class="stats-card-title">✨ Mon, Mar 10: 1/3 goals</div>
+        <div class="stats-card-body">You kept your routine, but the hard goal slipped and new goal didn't happen.</div>
+        <div class="stats-tags">
+          <span class="stats-tag missed">Hard ✗</span>
+          <span class="stats-tag done">Routine ✓</span>
+          <span class="stats-tag missed">New ✗</span>
+        </div>
+        <button class="stats-dive" onclick="openDive('Mon, Mar 10: 1/3 goals')">⚡ Dive deeper</button>
+      </div>
+    </div>
+  </div>
   <div class="placeholder-screen" id="screen-insights"><div class="p-title">Insights</div><div class="p-sub">Patterns and reflections</div></div>
 
   <!-- ═══ CHAT / REFLECT SCREEN ═══ -->
@@ -292,6 +396,20 @@
         <div class="plan-card"><div class="goal-header"><span class="goal-emoji">✨</span><div style="flex:1"><div class="goal-label">New goal</div><div class="goal-hint">Try something fresh</div></div></div><input class="plan-input" placeholder="What's the goal?" /><button class="friend-btn">Phone a Friend</button></div>
         <button class="lock-in-btn" onclick="closePlan()">Lock in tomorrow</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Dive Deeper modal -->
+  <div class="dive-overlay" id="diveModal">
+    <div class="dive-card">
+      <div class="dive-top">
+        <div class="dive-title">Dive Deeper</div>
+        <button class="dive-close" onclick="closeDive()">✕</button>
+      </div>
+      <div class="dive-subtitle" id="diveTopic"></div>
+      <div class="dive-tokens">🪙 Your tokens: 87</div>
+      <div class="dive-body">Get AI-powered deep analysis of this insight. Uses 1 token.</div>
+      <button class="dive-cta" onclick="closeDive()">⚡ Dive Deeper (1 token)</button>
     </div>
   </div>
 
@@ -437,6 +555,10 @@ function openCalDetail(ds, entry) {
   document.getElementById('calDetail').classList.add('open');
 }
 function closeCalDetail() { document.getElementById('calDetail').classList.remove('open'); }
+
+/* Dive deeper */
+function openDive(topic) { document.getElementById('diveTopic').textContent = topic; document.getElementById('diveModal').classList.add('open'); }
+function closeDive() { document.getElementById('diveModal').classList.remove('open'); }
 </script>
 
 </body>
