@@ -5,21 +5,77 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActivityIndicator, View } from 'react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import SignInScreen from './src/screens/SignInScreen';
+import SignUpScreen from './src/screens/SignUpScreen';
 import { getUserProfile } from './src/lib/storage';
+import { supabase } from './src/lib/supabase';
+import { syncFromSupabase } from './src/lib/storage';
+
+type AuthState = 'loading' | 'signIn' | 'signUp' | 'onboarding' | 'app';
 
 export default function App() {
-  const [loading, setLoading] = useState(true);
-  const [onboarded, setOnboarded] = useState(false);
+  const [authState, setAuthState] = useState<AuthState>('loading');
 
   useEffect(() => {
-    (async () => {
-      const profile = await getUserProfile();
-      setOnboarded(profile?.onboardingComplete === true);
-      setLoading(false);
-    })();
+    checkState();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setAuthState('signIn');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  if (loading) {
+  const checkState = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // Check if user has completed onboarding locally (pre-auth)
+        const profile = await getUserProfile();
+        if (profile?.onboardingComplete) {
+          // They onboarded but haven't signed up yet — show sign up
+          setAuthState('signUp');
+        } else {
+          setAuthState('signIn');
+        }
+        return;
+      }
+
+      // User is authenticated — check onboarding
+      const profile = await getUserProfile();
+      if (profile?.onboardingComplete) {
+        // Sync from Supabase on launch (cloud wins)
+        try { await syncFromSupabase(); } catch {}
+        setAuthState('app');
+      } else {
+        setAuthState('onboarding');
+      }
+    } catch {
+      setAuthState('signIn');
+    }
+  };
+
+  const handleAuthComplete = async () => {
+    const profile = await getUserProfile();
+    if (profile?.onboardingComplete) {
+      try { await syncFromSupabase(); } catch {}
+      setAuthState('app');
+    } else {
+      setAuthState('onboarding');
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setAuthState('app');
+  };
+
+  const handleSignOut = () => {
+    setAuthState('signIn');
+  };
+
+  if (authState === 'loading') {
     return (
       <SafeAreaProvider>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FAF9F7' }}>
@@ -29,11 +85,35 @@ export default function App() {
     );
   }
 
-  if (!onboarded) {
+  if (authState === 'signIn') {
     return (
       <SafeAreaProvider>
         <StatusBar style="dark" />
-        <OnboardingScreen onComplete={() => setOnboarded(true)} />
+        <SignInScreen
+          onSignIn={handleAuthComplete}
+          onSwitchToSignUp={() => setAuthState('signUp')}
+        />
+      </SafeAreaProvider>
+    );
+  }
+
+  if (authState === 'signUp') {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <SignUpScreen
+          onSignUp={handleAuthComplete}
+          onSwitchToSignIn={() => setAuthState('signIn')}
+        />
+      </SafeAreaProvider>
+    );
+  }
+
+  if (authState === 'onboarding') {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <OnboardingScreen onComplete={handleOnboardingComplete} />
       </SafeAreaProvider>
     );
   }
@@ -42,7 +122,7 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer>
         <StatusBar style="dark" />
-        <AppNavigator />
+        <AppNavigator onSignOut={handleSignOut} />
       </NavigationContainer>
     </SafeAreaProvider>
   );

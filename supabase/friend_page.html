@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Threefold – Help a Friend</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #FAF9F7;
+      color: #1A1A1A;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      padding: 32px 24px;
+      max-width: 420px;
+      width: 100%;
+      border: 1px solid #EDEDEB;
+      text-align: center;
+    }
+    .logo { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .subtitle { font-size: 14px; color: #7A7A7A; margin-bottom: 28px; }
+    .prompt {
+      font-size: 17px;
+      line-height: 1.5;
+      color: #1A1A1A;
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+    .goal-type {
+      display: inline-block;
+      background: #F0F0EC;
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #EDEDEB;
+      border-radius: 12px;
+      font-size: 16px;
+      color: #1A1A1A;
+      background: #FAF9F7;
+      margin-bottom: 16px;
+      outline: none;
+    }
+    input[type="text"]:focus { border-color: #1A1A1A; }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #1A1A1A;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .success {
+      background: #E8F5E9;
+      color: #2E7D32;
+      padding: 16px;
+      border-radius: 12px;
+      font-weight: 500;
+      font-size: 15px;
+    }
+    .error { color: #C62828; font-size: 14px; margin-top: 12px; }
+    #loading { display: none; color: #7A7A7A; font-size: 14px; padding: 40px 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">Threefold</div>
+    <div class="subtitle">Help a friend pick their goal</div>
+
+    <div id="loading">Loading...</div>
+
+    <div id="form-area" style="display:none;">
+      <p class="prompt" id="prompt-text"></p>
+      <input type="text" id="goal-input" placeholder="Suggest a goal..." />
+      <button id="submit-btn" onclick="submitGoal()">Send Suggestion</button>
+    </div>
+
+    <div id="success-area" style="display:none;">
+      <div class="success">Your suggestion has been sent! They'll see it in the app.</div>
+    </div>
+
+    <div id="error-area" style="display:none;">
+      <p class="error" id="error-text"></p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://wosnatgumgpawrfodwnp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvc25hdGd1bWdwYXdyZm9kd25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTk5NTUsImV4cCI6MjA4ODczNTk1NX0.NkXCfCKNKBl3BLWB-WG1_M-9SoL0RNX5LDx3DRCNzSA';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let requestId = null;
+
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      requestId = params.get('id');
+      if (!requestId) {
+        showError('Invalid link. No request ID found.');
+        return;
+      }
+
+      document.getElementById('loading').style.display = 'block';
+
+      const { data, error } = await sb
+        .from('tf_friend_requests')
+        .select('*')
+        .eq('id', requestId)
+        .single();
+
+      document.getElementById('loading').style.display = 'none';
+
+      if (error || !data) {
+        showError('This request was not found or has expired.');
+        return;
+      }
+
+      if (data.status === 'completed') {
+        document.getElementById('success-area').style.display = 'block';
+        return;
+      }
+
+      const goalLabel = data.goal_type === 'hard' ? 'Hard'
+        : data.goal_type === 'routine' ? 'Routine' : 'New';
+
+      document.getElementById('prompt-text').innerHTML =
+        `<strong>${data.friend_name}</strong> is planning tomorrow and needs your help picking their <span class="goal-type">${goalLabel}</span> goal.`;
+      document.getElementById('form-area').style.display = 'block';
+    }
+
+    async function submitGoal() {
+      const input = document.getElementById('goal-input');
+      const suggestion = input.value.trim();
+      if (!suggestion) return;
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      const { error } = await sb
+        .from('tf_friend_requests')
+        .update({ status: 'completed', suggested_goal: suggestion })
+        .eq('id', requestId);
+
+      if (error) {
+        showError('Something went wrong. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Send Suggestion';
+        return;
+      }
+
+      document.getElementById('form-area').style.display = 'none';
+      document.getElementById('success-area').style.display = 'block';
+    }
+
+    function showError(msg) {
+      document.getElementById('error-text').textContent = msg;
+      document.getElementById('error-area').style.display = 'block';
+    }
+
+    init();
+  </script>
+</body>
+</html>

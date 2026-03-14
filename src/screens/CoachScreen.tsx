@@ -26,9 +26,8 @@ import {
   StreakInfo,
 } from '../lib/storage';
 import { UserProfile, ChatMessage } from '../types';
+import { SUPABASE_FUNCTIONS_URL, supabase } from '../lib/supabase';
 import StreakBadge from '../components/StreakBadge';
-
-const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY || 'OPENAI_API_KEY_PLACEHOLDER';
 
 const PROMPT_CHIPS = [
   'I keep avoiding my hard goal',
@@ -88,22 +87,19 @@ export default function CoachScreen() {
 
     try {
       const systemPrompt = buildSystemPrompt(profile);
-      const apiMessages = [
-        { role: 'system', content: systemPrompt },
-        ...updated.slice(-20).map((m) => ({ role: m.role, content: m.content })),
-      ];
+      const chatMessages = updated.slice(-20).map((m) => ({ role: m.role, content: m.content }));
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/ai-coach`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          Authorization: `Bearer ${session?.access_token || ''}`,
+          apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvc25hdGd1bWdwYXdyZm9kd25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTk5NTUsImV4cCI6MjA4ODczNTk1NX0.NkXCfCKNKBl3BLWB-WG1_M-9SoL0RNX5LDx3DRCNzSA',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: apiMessages,
-          max_tokens: 200,
-          temperature: 0.7,
+          messages: chatMessages,
+          systemPrompt,
         }),
       });
 

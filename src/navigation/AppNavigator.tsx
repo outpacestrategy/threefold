@@ -6,6 +6,7 @@ import StatsScreen from '../screens/StatsScreen';
 import HomeScreen from '../screens/HomeScreen';
 import InsightsScreen from '../screens/InsightsScreen';
 import CoachScreen from '../screens/CoachScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -15,9 +16,14 @@ const TAB_ICONS: Record<string, { focused: string; unfocused: string }> = {
   Today: { focused: 'radio-button-on', unfocused: 'radio-button-off' },
   Insights: { focused: 'bulb', unfocused: 'bulb-outline' },
   Chat: { focused: 'chatbubble', unfocused: 'chatbubble-outline' },
+  Profile: { focused: 'person', unfocused: 'person-outline' },
 };
 
-export default function AppNavigator() {
+interface Props {
+  onSignOut: () => void;
+}
+
+export default function AppNavigator({ onSignOut }: Props) {
   return (
     <Tab.Navigator
       initialRouteName="Today"
@@ -52,6 +58,9 @@ export default function AppNavigator() {
       <Tab.Screen name="Today" component={HomeScreen} />
       <Tab.Screen name="Insights" component={InsightsScreen} />
       <Tab.Screen name="Chat" component={CoachScreen} />
+      <Tab.Screen name="Profile">
+        {() => <ProfileScreen onSignOut={onSignOut} />}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 }

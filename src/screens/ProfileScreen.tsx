@@ -21,6 +21,9 @@ import {
   TokenHistoryEntry,
 } from '../lib/storage';
 import { UserProfile, FocusArea, AiTone, GoalDifficulty } from '../types';
+import { supabase } from '../lib/supabase';
+import { registerForPushNotifications, scheduleEveningReminder } from '../lib/notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FOCUS_OPTIONS: { value: FocusArea; label: string }[] = [
   { value: 'health', label: 'Health' },
@@ -53,7 +56,11 @@ function formatHistoryDate(iso: string): string {
   return `${months[d.getMonth()]} ${d.getDate()} · ${hour}:${m} ${ampm}`;
 }
 
-export default function ProfileScreen() {
+interface ProfileProps {
+  onSignOut: () => void;
+}
+
+export default function ProfileScreen({ onSignOut }: ProfileProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [tokens, setTokens] = useState(0);
@@ -106,7 +113,56 @@ export default function ProfileScreen() {
     };
     await saveUserProfile(updated);
     setProfile(updated);
+    // Re-schedule notifications
+    try {
+      await registerForPushNotifications();
+      await scheduleEveningReminder();
+    } catch {}
     Alert.alert('Saved', 'Your profile has been updated.');
+  };
+
+  const handleSignOut = async () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          await supabase.auth.signOut();
+          await AsyncStorage.clear();
+          onSignOut();
+        },
+      },
+    ]);
+  };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your account and all data. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                await supabase.from('tf_day_entries').delete().eq('user_id', user.id);
+                await supabase.from('tf_friend_requests').delete().eq('user_id', user.id);
+                await supabase.from('tf_profiles').delete().eq('id', user.id);
+              }
+              await supabase.auth.signOut();
+              await AsyncStorage.clear();
+              onSignOut();
+            } catch {
+              Alert.alert('Error', 'Could not delete account. Please try again.');
+            }
+          },
+        },
+      ],
+    );
   };
 
   if (loading) {
@@ -298,11 +354,11 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         {/* ─── Footer ─── */}
-        <TouchableOpacity style={styles.signOutButton} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.signOutButton} activeOpacity={0.7} onPress={handleSignOut}>
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.deleteButton} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.deleteButton} activeOpacity={0.7} onPress={handleDeleteAccount}>
           <Text style={styles.deleteText}>Delete Account</Text>
         </TouchableOpacity>
 

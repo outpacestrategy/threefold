@@ -35,6 +35,13 @@
         {
           "contactsPermission": "Allow Threefold to access your contacts to use Phone a Friend."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1A1A1A"
+        }
       ]
     ]
   }

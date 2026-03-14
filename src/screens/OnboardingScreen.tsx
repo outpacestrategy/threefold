@@ -13,6 +13,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { UserProfile, IdentityType, AiTone, FocusArea, TomorrowEntry } from '../types';
 import { saveUserProfile, saveTomorrowEntry, getTomorrowDate } from '../lib/storage';
+import { supabase } from '../lib/supabase';
+import { registerForPushNotifications, scheduleEveningReminder } from '../lib/notifications';
 
 const IDENTITY_TYPES: { value: IdentityType; label: string }[] = [
   { value: 'founder', label: 'Founder' },
@@ -83,6 +85,22 @@ export default function OnboardingScreen({ onComplete }: Props) {
     };
     await saveUserProfile(profile);
 
+    // Save profile to Supabase
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('tf_profiles').upsert({
+          id: user.id,
+          name: profile.name,
+          identity_type: profile.identityType,
+          identity_statement: profile.identityStatement,
+          focus_areas: profile.focusAreas,
+          ai_tone: profile.aiTone,
+          onboarding_complete: true,
+        });
+      }
+    } catch {}
+
     const tomorrow: TomorrowEntry = {
       date: getTomorrowDate(),
       hardGoal: hardGoal.trim(),
@@ -90,6 +108,13 @@ export default function OnboardingScreen({ onComplete }: Props) {
       newGoal: newGoal.trim(),
     };
     await saveTomorrowEntry(tomorrow);
+
+    // Set up notifications
+    try {
+      await registerForPushNotifications();
+      await scheduleEveningReminder();
+    } catch {}
+
     onComplete();
   };
 

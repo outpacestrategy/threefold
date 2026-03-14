@@ -34,6 +34,7 @@ import {
   computeStreaks,
   StreakInfo,
 } from '../lib/storage';
+import { supabase } from '../lib/supabase';
 import StreakBadge from '../components/StreakBadge';
 
 const SLEEP_OPTIONS = [
@@ -76,6 +77,7 @@ export default function HomeScreen() {
   const [routineFriend, setRoutineFriend] = useState('');
   const [newFriend, setNewFriend] = useState('');
   const [waitingFor, setWaitingFor] = useState<Record<string, string>>({});
+  const [friendRequestIds, setFriendRequestIds] = useState<Record<string, string>>({});
 
   const loadData = async () => {
     setLoading(true);
@@ -95,7 +97,30 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [])
+
+      // Poll for friend request completions every 30s
+      const interval = setInterval(async () => {
+        const ids = friendRequestIds;
+        for (const [goalType, requestId] of Object.entries(ids)) {
+          try {
+            const { data } = await supabase
+              .from('tf_friend_requests')
+              .select('status, suggested_goal, friend_name')
+              .eq('id', requestId)
+              .single();
+            if (data && data.status === 'completed' && data.suggested_goal) {
+              if (goalType === 'hard') { setHardGoal(data.suggested_goal); setHardFriend(data.friend_name || 'Friend'); }
+              else if (goalType === 'routine') { setRoutineGoal(data.suggested_goal); setRoutineFriend(data.friend_name || 'Friend'); }
+              else { setNewGoal(data.suggested_goal); setNewFriend(data.friend_name || 'Friend'); }
+              setWaitingFor((prev) => { const n = { ...prev }; delete n[goalType]; return n; });
+              setFriendRequestIds((prev) => { const n = { ...prev }; delete n[goalType]; return n; });
+            }
+          } catch {}
+        }
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }, [friendRequestIds])
   );
 
   const saveNote = async (key: string, value: string) => {
@@ -169,12 +194,30 @@ export default function HomeScreen() {
         const profile = await getUserProfile();
         const userName = profile?.name || 'Your friend';
 
+        // Create friend request in Supabase
+        let friendLink = '';
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: req } = await supabase.from('tf_friend_requests').insert({
+              user_id: user.id,
+              goal_type: goalType,
+              friend_name: userName,
+              friend_phone: phone,
+            }).select('id').single();
+            if (req) {
+              friendLink = `https://threefold.drewtegui.com/friend?id=${req.id}`;
+              setFriendRequestIds((prev) => ({ ...prev, [goalType]: req.id }));
+            }
+          }
+        } catch {}
+
         const isAvailable = await SMS.isAvailableAsync();
         if (isAvailable) {
-          await SMS.sendSMSAsync(
-            [phone],
-            `${userName} is planning tomorrow and needs your help picking their ${goalLabel} goal. What should they do?`
-          );
+          const smsBody = friendLink
+            ? `${userName} is planning tomorrow and needs your help picking their ${goalLabel} goal. Suggest one here: ${friendLink}`
+            : `${userName} is planning tomorrow and needs your help picking their ${goalLabel} goal. What should they do?`;
+          await SMS.sendSMSAsync([phone], smsBody);
           if (goalType === 'hard') setHardFriend(friendName);
           else if (goalType === 'routine') setRoutineFriend(friendName);
           else setNewFriend(friendName);
