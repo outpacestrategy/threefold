@@ -58,9 +58,10 @@ function formatHistoryDate(iso: string): string {
 
 interface ProfileProps {
   onSignOut: () => void;
+  onClose?: () => void;
 }
 
-export default function ProfileScreen({ onSignOut }: ProfileProps) {
+export default function ProfileScreen({ onSignOut, onClose }: ProfileProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [tokens, setTokens] = useState(0);
@@ -178,7 +179,14 @@ export default function ProfileScreen({ onSignOut }: ProfileProps) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.heading}>Settings</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.heading}>Settings</Text>
+          {onClose && (
+            <TouchableOpacity onPress={onClose}>
+              <Text style={styles.doneButton}>Done</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* ─── Section 1: Token Balance ─── */}
         <TouchableOpacity style={styles.tokenCard} activeOpacity={0.7}>
@@ -374,7 +382,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FAF9F7' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { padding: 24, paddingTop: 16, paddingBottom: 60 },
-  heading: { fontSize: 28, fontWeight: '700', color: '#1A1A1A', marginBottom: 20 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  heading: { fontSize: 28, fontWeight: '700', color: '#1A1A1A' },
+  doneButton: { fontSize: 16, fontWeight: '500', color: '#6B6B6B' },
 
   /* Token card */
   tokenCard: {

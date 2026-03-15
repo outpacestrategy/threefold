@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { getHistory, getTodayDate, computeStreaks } from '../lib/storage';
+import { getHistory, getTodayDate, getTodayEntry, computeStreaks } from '../lib/storage';
 import { DayEntry, GoalStatus } from '../types';
 import StreakBadge from '../components/StreakBadge';
 
@@ -38,9 +38,9 @@ function getDayStatus(entry: DayEntry | undefined): DayStatus {
 
 function getStatusColor(status: DayStatus): string | null {
   switch (status) {
-    case 'all': return '#34C759';
-    case 'partial': return '#FFBD2E';
-    case 'missed': return '#C62828';
+    case 'all': return '#3DBBAA';
+    case 'partial': return '#E8C84A';
+    case 'missed': return '#D4574A';
     default: return null;
   }
 }
@@ -60,16 +60,20 @@ function getGoalStatusLabel(status: GoalStatus): string {
   return '';
 }
 
-export default function CalendarScreen() {
+export default function CalendarScreen({ onOpenProfile }: { onOpenProfile?: () => void }) {
   const [history, setHistory] = useState<DayEntry[]>([]);
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<DayEntry | null>(null);
+
+  const [todayEntry, setTodayEntry] = useState<DayEntry | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       (async () => {
         const h = await getHistory();
         setHistory(h);
+        const t = await getTodayEntry();
+        setTodayEntry(t);
       })();
     }, [])
   );
@@ -77,8 +81,12 @@ export default function CalendarScreen() {
   const historyMap = useMemo(() => {
     const map: Record<string, DayEntry> = {};
     history.forEach((e) => { map[e.date] = e; });
+    // Merge today's entry so it always appears even if not yet in history
+    if (todayEntry) {
+      map[todayEntry.date] = todayEntry;
+    }
     return map;
-  }, [history]);
+  }, [history, todayEntry]);
 
   const streaks = useMemo(() => computeStreaks(history), [history]);
 
@@ -100,7 +108,9 @@ export default function CalendarScreen() {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     if (dateStr > todayStr) return;
     const entry = historyMap[dateStr];
-    if (entry) setSelectedDay(entry);
+    if (entry && (entry.hardGoal || entry.routineGoal || entry.newGoal)) {
+      setSelectedDay(entry);
+    }
   };
 
   return (
@@ -108,9 +118,9 @@ export default function CalendarScreen() {
       {/* Top bar */}
       <View style={styles.topBar}>
         <StreakBadge streaks={streaks} />
-        <View style={styles.avatar}>
+        <TouchableOpacity style={styles.avatar} onPress={onOpenProfile} activeOpacity={0.7}>
           <Ionicons name="person" size={18} color="#7A7A7A" />
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Month nav */}
@@ -176,15 +186,15 @@ export default function CalendarScreen() {
       {/* Legend */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#34C759' }]} />
-          <Text style={styles.legendText}>All done</Text>
+          <View style={[styles.legendDot, { backgroundColor: '#3DBBAA' }]} />
+          <Text style={styles.legendText}>Done</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#FFBD2E' }]} />
+          <View style={[styles.legendDot, { backgroundColor: '#E8C84A' }]} />
           <Text style={styles.legendText}>Partial</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#C62828' }]} />
+          <View style={[styles.legendDot, { backgroundColor: '#D4574A' }]} />
           <Text style={styles.legendText}>Missed</Text>
         </View>
       </View>
@@ -213,19 +223,19 @@ export default function CalendarScreen() {
               <ScrollView style={styles.modalBody}>
                 <GoalDetailRow
                   typeLabel="HARD"
-                  typeColor="#FF6B6B"
+                  typeColor="#E8584A"
                   goal={selectedDay.hardGoal}
                   status={selectedDay.hardStatus}
                 />
                 <GoalDetailRow
                   typeLabel="ROUTINE"
-                  typeColor="#4ECDC4"
+                  typeColor="#3DBBAA"
                   goal={selectedDay.routineGoal}
                   status={selectedDay.routineStatus}
                 />
                 <GoalDetailRow
                   typeLabel="NEW"
-                  typeColor="#45B7D1"
+                  typeColor="#4A9FD9"
                   goal={selectedDay.newGoal}
                   status={selectedDay.newStatus}
                 />
@@ -271,7 +281,7 @@ function GoalDetailRow({ typeLabel, typeColor, goal, status }: {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF9F7',
+    backgroundColor: '#FAFAF9',
   },
 
   /* Top bar */
@@ -280,15 +290,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingTop: 10,
+    paddingBottom: 6,
     zIndex: 10,
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F0F0EC',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#EFEFEC',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -299,33 +309,35 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   monthLabel: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1A1A1A',
+    letterSpacing: -0.2,
   },
 
   /* Week header */
   weekRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    marginBottom: 6,
+    paddingHorizontal: 20,
+    marginBottom: 8,
   },
   weekLabel: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#A0A0A0',
+    color: '#BBB',
+    textTransform: 'uppercase',
   },
 
   /* Grid */
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   cell: {
     width: `${100 / 7}%`,
@@ -335,15 +347,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayCell: {
-    borderRadius: 10,
-    backgroundColor: '#F0F0EC',
+    borderRadius: 9,
+    backgroundColor: '#F0EFEC',
   },
   todayCell: {
     borderWidth: 2,
     borderColor: '#1A1A1A',
   },
   dayText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
 
@@ -351,44 +363,45 @@ const styles = StyleSheet.create({
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
-    paddingVertical: 16,
+    gap: 16,
+    paddingVertical: 14,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   legendText: {
-    fontSize: 12,
-    color: '#7A7A7A',
+    fontSize: 11,
+    color: '#999',
     fontWeight: '500',
   },
 
   /* Modal */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 24,
-    paddingBottom: 40,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    padding: 20,
+    paddingHorizontal: 24,
+    paddingBottom: 36,
     maxHeight: '60%',
   },
   modalHandle: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#D1D1D6',
+    backgroundColor: '#DDD',
     alignSelf: 'center',
     marginBottom: 16,
   },
@@ -396,12 +409,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalDate: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1A1A1A',
+    letterSpacing: -0.2,
   },
   modalBody: {
     flexGrow: 0,
@@ -409,31 +423,30 @@ const styles = StyleSheet.create({
 
   /* Goal detail rows */
   goalDetailRow: {
-    backgroundColor: '#FAF9F7',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#EDEDEB',
+    backgroundColor: '#FAFAF9',
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 8,
   },
   goalDetailHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   goalTypeLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   goalStatusLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
   goalDetailText: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#1A1A1A',
-    lineHeight: 22,
+    lineHeight: 20,
   },
 });

@@ -41,17 +41,31 @@
   .sleep-row { display: flex; gap: 8px; margin: 12px 0 24px; }
   .sleep-dot { font-size: 18px; cursor: pointer; opacity: .35; transition: all .15s; }
   .sleep-dot.on { opacity: 1; transform: scale(1.15); }
-  .goal { background: #fff; border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; position: relative; overflow: hidden; }
+  .goal { background: #fff; border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; position: relative; overflow: hidden; transition: opacity .2s; }
+  .goal.done { opacity: .5; }
   .goal::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 4px 0 0 4px; }
   .goal.hard::before { background: #E8584A; }
   .goal.routine::before { background: #3DBBAA; }
   .goal.new::before { background: #4A9FD9; }
+  .goal-tap { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+  .goal-check { width: 24px; height: 24px; border-radius: 12px; border: 2px solid #DDD; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+  .goal-check.checked { background: #3DBBAA; border-color: #3DBBAA; }
+  .goal-check.checked::after { content: '✓'; color: #fff; font-size: 13px; font-weight: 700; }
   .goal-type { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
-  .goal-body { font-size: 15px; font-weight: 500; color: #1A1A1A; line-height: 21px; }
-  .goal-note-btn { font-size: 12px; color: #BBB; cursor: pointer; background: none; border: none; padding: 0; margin-top: 8px; font-weight: 500; }
+  .goal-body { font-size: 15px; font-weight: 500; color: #1A1A1A; line-height: 21px; transition: all .15s; }
+  .goal.done .goal-body { text-decoration: line-through; color: #999; }
+  .goal-note-btn { font-size: 12px; color: #BBB; cursor: pointer; background: none; border: none; padding: 0; margin-top: 8px; margin-left: 36px; font-weight: 500; }
   .goal-note-btn:hover { color: #888; }
-  .goal-note { display: none; margin-top: 8px; background: #FAFAF9; border: 1px solid #F0EFEC; border-radius: 8px; padding: 10px; font-size: 13px; color: #1A1A1A; font-family: inherit; outline: none; resize: none; min-height: 48px; width: 100%; }
-  .goal-note.show { display: block; }
+  .note-section { display: none; margin-top: 10px; margin-left: 36px; }
+  .note-section.show { display: block; }
+  .note-entry { display: flex; gap: 8px; margin-bottom: 8px; }
+  .note-time { font-size: 11px; color: #BBB; font-weight: 500; width: 52px; padding-top: 2px; flex-shrink: 0; }
+  .note-text { font-size: 13px; color: #555; line-height: 18px; }
+  .note-input-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .note-input { flex: 1; background: #FAFAF9; border: 1px solid #F0EFEC; border-radius: 8px; padding: 10px; font-size: 13px; color: #1A1A1A; font-family: inherit; outline: none; }
+  .note-input:focus { border-color: #CCC; }
+  .note-send { width: 30px; height: 30px; border-radius: 15px; background: #1A1A1A; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .note-send svg { width: 14px; height: 14px; color: #fff; }
   .plan-btn { display: block; width: 100%; background: #1A1A1A; color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; text-align: center; cursor: pointer; margin-top: 12px; letter-spacing: -.2px; }
   .plan-btn:hover { background: #2A2A2A; }
 
@@ -177,7 +191,7 @@
   .detail-status { font-size: 11px; font-weight: 600; float: right; }
 
   /* Tab bar */
-  .tab-bar { display: flex; justify-content: space-around; align-items: flex-end; padding: 6px 0 26px; background: #FAFAF9; border-top: 1px solid #F0EFEC; flex-shrink: 0; }
+  .tab-bar { display: flex; justify-content: space-around; align-items: flex-end; padding: 10px 0 34px; background: #FAFAF9; border-top: 1px solid #F0EFEC; flex-shrink: 0; }
   .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; user-select: none; flex: 1; }
   .tab svg { width: 22px; height: 22px; }
   .tab .lbl { font-size: 10px; font-weight: 500; }
@@ -219,23 +233,56 @@
         <span class="sleep-dot" onclick="pickSleep(this)">😁</span>
       </div>
 
-      <div class="goal hard">
-        <div class="goal-type">Hard</div>
-        <div class="goal-body">Ship the landing page redesign</div>
-        <button class="goal-note-btn" onclick="toggleNote(this)">notes</button>
-        <textarea class="goal-note" placeholder="How's it going?"></textarea>
+      <div class="goal hard" id="goal-hard">
+        <div class="goal-tap" onclick="toggleGoal('hard')">
+          <div class="goal-check" id="check-hard"></div>
+          <div>
+            <div class="goal-type">Hard</div>
+            <div class="goal-body">Ship the landing page redesign</div>
+          </div>
+        </div>
+        <button class="goal-note-btn" onclick="toggleNotes(this)">add note</button>
+        <div class="note-section">
+          <div class="note-timeline"></div>
+          <div class="note-input-row">
+            <input class="note-input" placeholder="Add a note..." onkeydown="if(event.key==='Enter')addNote(this)" />
+            <button class="note-send" onclick="addNote(this.previousElementSibling)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+          </div>
+        </div>
       </div>
-      <div class="goal routine">
-        <div class="goal-type">Routine</div>
-        <div class="goal-body">30 min morning run</div>
-        <button class="goal-note-btn" onclick="toggleNote(this)">notes</button>
-        <textarea class="goal-note" placeholder="How's it going?"></textarea>
+      <div class="goal routine" id="goal-routine">
+        <div class="goal-tap" onclick="toggleGoal('routine')">
+          <div class="goal-check" id="check-routine"></div>
+          <div>
+            <div class="goal-type">Routine</div>
+            <div class="goal-body">30 min morning run</div>
+          </div>
+        </div>
+        <button class="goal-note-btn" onclick="toggleNotes(this)">add note</button>
+        <div class="note-section">
+          <div class="note-timeline"></div>
+          <div class="note-input-row">
+            <input class="note-input" placeholder="Add a note..." onkeydown="if(event.key==='Enter')addNote(this)" />
+            <button class="note-send" onclick="addNote(this.previousElementSibling)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+          </div>
+        </div>
       </div>
-      <div class="goal new">
-        <div class="goal-type">New</div>
-        <div class="goal-body">Read 20 pages of DDIA</div>
-        <button class="goal-note-btn" onclick="toggleNote(this)">notes</button>
-        <textarea class="goal-note" placeholder="How's it going?"></textarea>
+      <div class="goal new" id="goal-new">
+        <div class="goal-tap" onclick="toggleGoal('new')">
+          <div class="goal-check" id="check-new"></div>
+          <div>
+            <div class="goal-type">New</div>
+            <div class="goal-body">Read 20 pages of DDIA</div>
+          </div>
+        </div>
+        <button class="goal-note-btn" onclick="toggleNotes(this)">add note</button>
+        <div class="note-section">
+          <div class="note-timeline"></div>
+          <div class="note-input-row">
+            <input class="note-input" placeholder="Add a note..." onkeydown="if(event.key==='Enter')addNote(this)" />
+            <button class="note-send" onclick="addNote(this.previousElementSibling)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+          </div>
+        </div>
       </div>
 
       <button class="plan-btn" onclick="openPlan()">Plan tomorrow</button>
@@ -499,7 +546,36 @@
 
 <script>
 function pickSleep(el) { document.querySelectorAll('.sleep-dot').forEach(o => o.classList.remove('on')); el.classList.add('on'); }
-function toggleNote(btn) { const t = btn.nextElementSibling; const s = t.classList.toggle('show'); btn.textContent = s ? 'hide notes' : 'notes'; if (s) t.focus(); }
+function toggleNotes(btn) {
+  const section = btn.nextElementSibling;
+  const showing = section.classList.toggle('show');
+  const count = section.querySelector('.note-timeline').children.length;
+  btn.textContent = showing ? (count > 0 ? count + ' note' + (count > 1 ? 's' : '') : 'hide') : (count > 0 ? count + ' note' + (count > 1 ? 's' : '') : 'add note');
+  if (showing) section.querySelector('.note-input').focus();
+}
+function addNote(input) {
+  const text = input.value.trim();
+  if (!text) return;
+  const timeline = input.closest('.note-section').querySelector('.note-timeline');
+  const now = new Date();
+  const time = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const entry = document.createElement('div');
+  entry.className = 'note-entry';
+  entry.innerHTML = '<span class="note-time">' + time + '</span><span class="note-text">' + text + '</span>';
+  timeline.appendChild(entry);
+  input.value = '';
+  input.focus();
+  // Update the toggle button count
+  const btn = input.closest('.note-section').previousElementSibling;
+  const count = timeline.children.length;
+  btn.textContent = count + ' note' + (count > 1 ? 's' : '');
+}
+function toggleGoal(key) {
+  const card = document.getElementById('goal-' + key);
+  const check = document.getElementById('check-' + key);
+  card.classList.toggle('done');
+  check.classList.toggle('checked');
+}
 function toggleStreak(el) { el.querySelector('.streak-dd').classList.toggle('show'); }
 function openStuck() { document.getElementById('stuckModal').classList.add('open'); }
 function closeStuck() { document.getElementById('stuckModal').classList.remove('open'); }

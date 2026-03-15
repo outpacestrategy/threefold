@@ -18,7 +18,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Contacts from 'expo-contacts';
 import * as SMS from 'expo-sms';
-import { DayEntry, TomorrowEntry, GoalType } from '../types';
+import { DayEntry, TomorrowEntry, GoalType, GoalNote } from '../types';
 import {
   getTodayEntry,
   saveTodayEntry,
@@ -32,6 +32,7 @@ import {
   spendToken,
   addTokenHistoryEntry,
   computeStreaks,
+  addToHistory,
   StreakInfo,
 } from '../lib/storage';
 import { supabase } from '../lib/supabase';
@@ -58,7 +59,7 @@ function getGreeting(): string {
   return 'Good evening';
 }
 
-export default function HomeScreen() {
+export default function HomeScreen({ onOpenProfile }: { onOpenProfile?: () => void }) {
   const [today, setToday] = useState<DayEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [sleepRating, setSleepRating] = useState<number | null>(null);
@@ -66,7 +67,8 @@ export default function HomeScreen() {
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [streaks, setStreaks] = useState<StreakInfo>({ total: 0, hard: 0, routine: 0, new: 0 });
   const [tokens, setTokens] = useState(0);
-  const [notes, setNotes] = useState<Record<string, string>>({ hard: '', routine: '', new: '' });
+  const [goalNotes, setGoalNotes] = useState<Record<string, GoalNote[]>>({ hard: [], routine: [], new: [] });
+  const [noteInput, setNoteInput] = useState<Record<string, string>>({ hard: '', routine: '', new: '' });
   const [expandedNote, setExpandedNote] = useState<string | null>(null);
 
   // Plan modal state
@@ -85,7 +87,11 @@ export default function HomeScreen() {
     const t = await getTodayEntry();
     setToday(t);
     if (t) {
-      setNotes({ hard: t.hardNote || '', routine: t.routineNote || '', new: t.newNote || '' });
+      setGoalNotes({
+        hard: t.hardNotes || [],
+        routine: t.routineNotes || [],
+        new: t.newNotes || [],
+      });
     }
     const history = await getHistory();
     setStreaks(computeStreaks(history));
@@ -123,13 +129,30 @@ export default function HomeScreen() {
     }, [friendRequestIds])
   );
 
-  const saveNote = async (key: string, value: string) => {
-    setNotes((prev) => ({ ...prev, [key]: value }));
-    if (today) {
-      const updated = { ...today, [`${key}Note`]: value };
-      await saveTodayEntry(updated as DayEntry);
-      setToday(updated as DayEntry);
-    }
+  const addNote = async (key: string) => {
+    const text = noteInput[key]?.trim();
+    if (!text || !today) return;
+    const newNote: GoalNote = { text, time: new Date().toISOString() };
+    const notesKey = `${key}Notes` as 'hardNotes' | 'routineNotes' | 'newNotes';
+    const existing = today[notesKey] || [];
+    const updatedNotes = [...existing, newNote];
+    const updated = { ...today, [notesKey]: updatedNotes };
+    setToday(updated);
+    setGoalNotes((prev) => ({ ...prev, [key]: updatedNotes }));
+    setNoteInput((prev) => ({ ...prev, [key]: '' }));
+    await saveTodayEntry(updated);
+    await addToHistory(updated);
+  };
+
+  const toggleGoalStatus = async (key: string) => {
+    if (!today) return;
+    const statusKey = `${key}Status` as 'hardStatus' | 'routineStatus' | 'newStatus';
+    const current = today[statusKey];
+    const next = current === 'complete' ? null : 'complete' as const;
+    const updated = { ...today, [statusKey]: next };
+    setToday(updated);
+    await saveTodayEntry(updated);
+    await addToHistory(updated);
   };
 
   const openPlanModal = async () => {
@@ -258,9 +281,9 @@ export default function HomeScreen() {
       {/* Top bar */}
       <View style={styles.topBar}>
         <StreakBadge streaks={streaks} />
-        <View style={styles.avatar}>
+        <TouchableOpacity style={styles.avatar} onPress={onOpenProfile} activeOpacity={0.7}>
           <Ionicons name="person" size={18} color="#7A7A7A" />
-        </View>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -289,39 +312,22 @@ export default function HomeScreen() {
           const goalText = goalTextMap[cfg.key];
           const status = statusMap[cfg.key];
           return (
-            <View key={cfg.key} style={styles.goalCard}>
-              <View style={styles.goalHeader}>
-                <Text style={styles.goalEmoji}>{cfg.emoji}</Text>
+            <View key={cfg.key} style={[styles.goalCard, status === 'complete' && styles.goalCardDone]}>
+              <TouchableOpacity
+                style={styles.goalTappable}
+                onPress={() => goalText ? toggleGoalStatus(cfg.key) : undefined}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.goalCheck, status === 'complete' && styles.goalCheckDone]}>
+                  {status === 'complete' && <Ionicons name="checkmark" size={14} color="#fff" />}
+                </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.goalLabel}>{cfg.label}</Text>
-                  <Text style={styles.goalHint}>{cfg.hint}</Text>
+                  <Text style={[styles.goalText, status === 'complete' && styles.goalTextDone]}>
+                    {goalText || 'No goal set yet'}
+                  </Text>
                 </View>
-                {status && (
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      status === 'complete' && { backgroundColor: '#E8F5E9' },
-                      status === 'partial' && { backgroundColor: '#FFF8E1' },
-                      status === 'not_done' && { backgroundColor: '#FFEBEE' },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusText,
-                        status === 'complete' && { color: '#2E7D32' },
-                        status === 'partial' && { color: '#F57F17' },
-                        status === 'not_done' && { color: '#C62828' },
-                      ]}
-                    >
-                      {status === 'complete' ? 'Done' : status === 'partial' ? 'Partial' : 'Missed'}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              <Text style={styles.goalText}>
-                {goalText || 'No goal set yet'}
-              </Text>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.noteToggle}
@@ -329,19 +335,41 @@ export default function HomeScreen() {
                 activeOpacity={0.6}
               >
                 <Text style={styles.noteToggleText}>
-                  {expandedNote === cfg.key ? '📝 Hide notes' : '📝 Add notes'}
+                  {goalNotes[cfg.key]?.length > 0
+                    ? `${goalNotes[cfg.key].length} note${goalNotes[cfg.key].length > 1 ? 's' : ''}`
+                    : 'add note'}
                 </Text>
               </TouchableOpacity>
 
               {expandedNote === cfg.key && (
-                <TextInput
-                  style={styles.noteInput}
-                  placeholder="Jot down thoughts, progress, or reflections..."
-                  placeholderTextColor="#A0A0A0"
-                  value={notes[cfg.key]}
-                  onChangeText={(text) => saveNote(cfg.key, text)}
-                  multiline
-                />
+                <View style={styles.noteSection}>
+                  {goalNotes[cfg.key]?.map((note, idx) => (
+                    <View key={idx} style={styles.noteEntry}>
+                      <Text style={styles.noteTime}>
+                        {new Date(note.time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                      </Text>
+                      <Text style={styles.noteText}>{note.text}</Text>
+                    </View>
+                  ))}
+                  <View style={styles.noteInputRow}>
+                    <TextInput
+                      style={styles.noteInput}
+                      placeholder="Add a note..."
+                      placeholderTextColor="#BBB"
+                      value={noteInput[cfg.key]}
+                      onChangeText={(text) => setNoteInput((prev) => ({ ...prev, [cfg.key]: text }))}
+                      onSubmitEditing={() => addNote(cfg.key)}
+                      returnKeyType="send"
+                    />
+                    <TouchableOpacity
+                      style={[styles.noteSendBtn, !noteInput[cfg.key]?.trim() && { opacity: 0.3 }]}
+                      onPress={() => addNote(cfg.key)}
+                      disabled={!noteInput[cfg.key]?.trim()}
+                    >
+                      <Ionicons name="arrow-up" size={16} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
               )}
             </View>
           );
@@ -571,67 +599,104 @@ const styles = StyleSheet.create({
   goalCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
-    padding: 18,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#EDEDEB',
-  },
-  goalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    padding: 16,
     marginBottom: 10,
-    gap: 10,
   },
-  goalEmoji: {
-    fontSize: 20,
+  goalCardDone: {
+    opacity: 0.6,
+  },
+  goalTappable: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  goalCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#DDD',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  goalCheckDone: {
+    backgroundColor: '#3DBBAA',
+    borderColor: '#3DBBAA',
   },
   goalLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  goalHint: {
-    fontSize: 12,
-    color: '#A0A0A0',
-    marginTop: 1,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#999',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 3,
   },
   goalText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#1A1A1A',
-    lineHeight: 22,
-    paddingLeft: 30,
-    marginBottom: 10,
+    lineHeight: 21,
+    fontWeight: '500',
   },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
+  goalTextDone: {
+    textDecorationLine: 'line-through',
+    color: '#999',
   },
   noteToggle: {
     alignSelf: 'flex-start',
-    marginLeft: 30,
+    marginLeft: 36,
+    marginTop: 6,
   },
   noteToggleText: {
-    fontSize: 13,
-    color: '#A0A0A0',
+    fontSize: 12,
+    color: '#BBB',
     fontWeight: '500',
   },
-  noteInput: {
-    backgroundColor: '#F9F9F7',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 14,
-    color: '#1A1A1A',
+  noteSection: {
     marginTop: 10,
-    marginLeft: 30,
-    minHeight: 60,
-    textAlignVertical: 'top',
+    marginLeft: 36,
+  },
+  noteEntry: {
+    flexDirection: 'row',
+    marginBottom: 8,
+    gap: 8,
+  },
+  noteTime: {
+    fontSize: 11,
+    color: '#BBB',
+    fontWeight: '500',
+    width: 52,
+    paddingTop: 2,
+  },
+  noteText: {
+    fontSize: 13,
+    color: '#555',
+    lineHeight: 18,
+    flex: 1,
+  },
+  noteInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  noteInput: {
+    flex: 1,
+    backgroundColor: '#FAFAF9',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 13,
+    color: '#1A1A1A',
     borderWidth: 1,
-    borderColor: '#EDEDEB',
+    borderColor: '#F0EFEC',
+  },
+  noteSendBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#1A1A1A',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stuckButton: {
     alignSelf: 'flex-start',

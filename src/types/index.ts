@@ -23,9 +23,9 @@ export interface DayEntry {
   routineStatus: GoalStatus;
   newStatus: GoalStatus;
   reflection?: string;
-  hardNote?: string;
-  routineNote?: string;
-  newNote?: string;
+  hardNotes?: GoalNote[];
+  routineNotes?: GoalNote[];
+  newNotes?: GoalNote[];
   checkedIn: boolean;
 }
 
@@ -37,6 +37,11 @@ export interface TomorrowEntry {
   hardFriendName?: string;
   routineFriendName?: string;
   newFriendName?: string;
+}
+
+export interface GoalNote {
+  text: string;
+  time: string; // ISO string
 }
 
 export interface ChatMessage {

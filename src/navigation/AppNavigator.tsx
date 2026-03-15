@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Modal } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import CalendarScreen from '../screens/CalendarScreen';
@@ -16,7 +17,6 @@ const TAB_ICONS: Record<string, { focused: string; unfocused: string }> = {
   Today: { focused: 'radio-button-on', unfocused: 'radio-button-off' },
   Insights: { focused: 'bulb', unfocused: 'bulb-outline' },
   Chat: { focused: 'chatbubble', unfocused: 'chatbubble-outline' },
-  Profile: { focused: 'person', unfocused: 'person-outline' },
 };
 
 interface Props {
@@ -24,43 +24,62 @@ interface Props {
 }
 
 export default function AppNavigator({ onSignOut }: Props) {
+  const [showProfile, setShowProfile] = useState(false);
+
   return (
-    <Tab.Navigator
-      initialRouteName="Today"
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarIcon: ({ focused, size }) => {
-          const icons = TAB_ICONS[route.name];
-          const iconName = focused ? icons.focused : icons.unfocused;
-          return (
-            <Ionicons
-              name={iconName as any}
-              size={22}
-              color={focused ? '#1A1A1A' : '#A0A0A0'}
-            />
-          );
-        },
-        tabBarActiveTintColor: '#1A1A1A',
-        tabBarInactiveTintColor: '#A0A0A0',
-        tabBarStyle: {
-          backgroundColor: '#FAF9F7',
-          borderTopColor: '#EDEDEB',
-          paddingTop: 4,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500' as const,
-        },
-      })}
-    >
-      <Tab.Screen name="Calendar" component={CalendarScreen} />
-      <Tab.Screen name="Stats" component={StatsScreen} />
-      <Tab.Screen name="Today" component={HomeScreen} />
-      <Tab.Screen name="Insights" component={InsightsScreen} />
-      <Tab.Screen name="Chat" component={CoachScreen} />
-      <Tab.Screen name="Profile">
-        {() => <ProfileScreen onSignOut={onSignOut} />}
-      </Tab.Screen>
-    </Tab.Navigator>
+    <>
+      <Tab.Navigator
+        initialRouteName="Today"
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarIcon: ({ focused }) => {
+            const icons = TAB_ICONS[route.name];
+            const iconName = focused ? icons.focused : icons.unfocused;
+            return (
+              <Ionicons
+                name={iconName as any}
+                size={22}
+                color={focused ? '#1A1A1A' : '#A0A0A0'}
+              />
+            );
+          },
+          tabBarActiveTintColor: '#1A1A1A',
+          tabBarInactiveTintColor: '#A0A0A0',
+          tabBarStyle: {
+            backgroundColor: '#FAFAF9',
+            borderTopColor: '#F0EFEC',
+            paddingTop: 8,
+            paddingBottom: 28,
+            height: 88,
+          },
+          tabBarLabelStyle: {
+            fontSize: 10,
+            fontWeight: '500' as const,
+          },
+        })}
+      >
+        <Tab.Screen name="Calendar">
+          {() => <CalendarScreen onOpenProfile={() => setShowProfile(true)} />}
+        </Tab.Screen>
+        <Tab.Screen name="Stats" component={StatsScreen} />
+        <Tab.Screen name="Today">
+          {() => <HomeScreen onOpenProfile={() => setShowProfile(true)} />}
+        </Tab.Screen>
+        <Tab.Screen name="Insights" component={InsightsScreen} />
+        <Tab.Screen name="Chat" component={CoachScreen} />
+      </Tab.Navigator>
+
+      <Modal
+        visible={showProfile}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowProfile(false)}
+      >
+        <ProfileScreen
+          onSignOut={() => { setShowProfile(false); onSignOut(); }}
+          onClose={() => setShowProfile(false)}
+        />
+      </Modal>
+    </>
   );
 }

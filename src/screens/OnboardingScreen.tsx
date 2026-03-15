@@ -14,7 +14,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { UserProfile, IdentityType, AiTone, FocusArea, TomorrowEntry } from '../types';
-import { saveUserProfile, saveTomorrowEntry, getTomorrowDate } from '../lib/storage';
+import { saveUserProfile, saveTodayEntry, saveTomorrowEntry, getTodayDate, getTomorrowDate, addToHistory } from '../lib/storage';
 import { supabase } from '../lib/supabase';
 import { registerForPushNotifications, scheduleEveningReminder } from '../lib/notifications';
 
@@ -123,6 +123,21 @@ export default function OnboardingScreen({ onComplete }: Props) {
       }
     } catch {}
 
+    // Save as today's goals so they show immediately
+    const todayEntry: import('../types').DayEntry = {
+      date: getTodayDate(),
+      hardGoal: hardGoal.trim(),
+      routineGoal: routineGoal.trim(),
+      newGoal: newGoal.trim(),
+      hardStatus: null,
+      routineStatus: null,
+      newStatus: null,
+      checkedIn: false,
+    };
+    await saveTodayEntry(todayEntry);
+    await addToHistory(todayEntry);
+
+    // Also save as tomorrow's plan so they carry forward
     const tomorrow: TomorrowEntry = {
       date: getTomorrowDate(),
       hardGoal: hardGoal.trim(),
@@ -267,8 +282,8 @@ export default function OnboardingScreen({ onComplete }: Props) {
       case 4:
         return (
           <View>
-            <Text style={styles.stepTitle}>Your first three goals</Text>
-            <Text style={styles.stepDesc}>Plan tomorrow tonight. What will you tackle?</Text>
+            <Text style={styles.stepTitle}>Set your first goals</Text>
+            <Text style={styles.stepDesc}>What three things will you focus on? These become today's goals — tomorrow you'll plan the night before.</Text>
 
             <View style={styles.goalSlot}>
               <View style={[styles.goalDot, { backgroundColor: '#FF6B6B' }]} />
