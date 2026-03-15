@@ -155,7 +155,7 @@ export default function CalendarScreen({ onOpenProfile }: { onOpenProfile?: () =
       <View style={styles.grid}>
         {calendarCells.map((day, i) => {
           if (day === null) {
-            return <View key={i} style={styles.cell} />;
+            return <View key={i} style={styles.cell}><View style={styles.dayInner} /></View>;
           }
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           const entry = historyMap[dateStr];
@@ -165,28 +165,28 @@ export default function CalendarScreen({ onOpenProfile }: { onOpenProfile?: () =
           const isFuture = dateStr > todayStr;
 
           return (
-            <TouchableOpacity
-              key={i}
-              style={[
-                styles.cell,
-                styles.dayCell,
-                color ? { backgroundColor: color } : { backgroundColor: '#F0F0EC' },
-                isToday && styles.todayCell,
-                isFuture && { opacity: 0.4 },
-              ]}
-              onPress={() => handleDayPress(day)}
-              activeOpacity={0.7}
-              disabled={isFuture}
-            >
-              <Text
+            <View key={i} style={styles.cell}>
+              <TouchableOpacity
                 style={[
-                  styles.dayText,
-                  color ? { color: '#FFFFFF' } : { color: '#1A1A1A' },
+                  styles.dayInner,
+                  color ? { backgroundColor: color } : { backgroundColor: '#F0EFEC' },
+                  isToday && styles.todayCell,
+                  isFuture && { opacity: 0.35 },
                 ]}
+                onPress={() => handleDayPress(day)}
+                activeOpacity={0.7}
+                disabled={isFuture}
               >
-                {day}
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.dayText,
+                    color ? { color: '#FFFFFF' } : { color: '#1A1A1A' },
+                  ]}
+                >
+                  {day}
+                </Text>
+              </TouchableOpacity>
+            </View>
           );
         })}
       </View>
@@ -343,8 +343,8 @@ const styles = StyleSheet.create({
   /* Week header */
   weekRow: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 8,
+    paddingHorizontal: 12,
+    marginBottom: 6,
   },
   weekLabel: {
     flex: 1,
@@ -359,25 +359,25 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
   },
   cell: {
     width: `${100 / 7}%`,
-    aspectRatio: 1,
     padding: 3,
+  },
+  dayInner: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  dayCell: {
-    borderRadius: 9,
-    backgroundColor: '#F0EFEC',
   },
   todayCell: {
     borderWidth: 2,
     borderColor: '#1A1A1A',
   },
   dayText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
 
