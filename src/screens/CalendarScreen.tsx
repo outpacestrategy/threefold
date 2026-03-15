@@ -108,9 +108,17 @@ export default function CalendarScreen({ onOpenProfile }: { onOpenProfile?: () =
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     if (dateStr > todayStr) return;
     const entry = historyMap[dateStr];
-    if (entry && (entry.hardGoal || entry.routineGoal || entry.newGoal)) {
-      setSelectedDay(entry);
-    }
+    // Show drawer for any past/present date — with or without goals
+    setSelectedDay(entry || {
+      date: dateStr,
+      hardGoal: '',
+      routineGoal: '',
+      newGoal: '',
+      hardStatus: null,
+      routineStatus: null,
+      newStatus: null,
+      checkedIn: false,
+    });
   };
 
   return (
@@ -219,28 +227,42 @@ export default function CalendarScreen({ onOpenProfile }: { onOpenProfile?: () =
               </TouchableOpacity>
             </View>
 
-            {selectedDay && (
+            {selectedDay && (() => {
+              const hasGoals = selectedDay.hardGoal || selectedDay.routineGoal || selectedDay.newGoal;
+              const completed = [selectedDay.hardStatus, selectedDay.routineStatus, selectedDay.newStatus].filter(s => s === 'complete').length;
+              const total = [selectedDay.hardGoal, selectedDay.routineGoal, selectedDay.newGoal].filter(Boolean).length;
+              return (
               <ScrollView style={styles.modalBody}>
-                <GoalDetailRow
-                  typeLabel="HARD"
-                  typeColor="#E8584A"
-                  goal={selectedDay.hardGoal}
-                  status={selectedDay.hardStatus}
-                />
-                <GoalDetailRow
-                  typeLabel="ROUTINE"
-                  typeColor="#3DBBAA"
-                  goal={selectedDay.routineGoal}
-                  status={selectedDay.routineStatus}
-                />
-                <GoalDetailRow
-                  typeLabel="NEW"
-                  typeColor="#4A9FD9"
-                  goal={selectedDay.newGoal}
-                  status={selectedDay.newStatus}
-                />
+                {hasGoals ? (
+                  <>
+                    <Text style={styles.modalSummary}>
+                      {completed}/{total} completed
+                    </Text>
+                    <GoalDetailRow
+                      typeLabel="HARD"
+                      typeColor="#E8584A"
+                      goal={selectedDay.hardGoal}
+                      status={selectedDay.hardStatus}
+                    />
+                    <GoalDetailRow
+                      typeLabel="ROUTINE"
+                      typeColor="#3DBBAA"
+                      goal={selectedDay.routineGoal}
+                      status={selectedDay.routineStatus}
+                    />
+                    <GoalDetailRow
+                      typeLabel="NEW"
+                      typeColor="#4A9FD9"
+                      goal={selectedDay.newGoal}
+                      status={selectedDay.newStatus}
+                    />
+                  </>
+                ) : (
+                  <Text style={styles.modalEmpty}>No goals were set for this day.</Text>
+                )}
               </ScrollView>
-            )}
+              );
+            })()}
           </Pressable>
         </Pressable>
       </Modal>
@@ -419,6 +441,18 @@ const styles = StyleSheet.create({
   },
   modalBody: {
     flexGrow: 0,
+  },
+  modalSummary: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#999',
+    marginBottom: 12,
+  },
+  modalEmpty: {
+    fontSize: 14,
+    color: '#BBB',
+    textAlign: 'center',
+    paddingVertical: 20,
   },
 
   /* Goal detail rows */
